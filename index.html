@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Universal Media Converter Pro</title>
+  <meta name="description" content="ブラウザ内で安全・無制限に一括変換できる高機能メディア変換ツール。WebMからMP4への高速変換に対応。">
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --card-bg: #ffffff;
+      --text-color: #0f172a;
+      --text-sub: #64748b;
+      --border-color: #e2e8f0;
+      --accent-color: #2563eb;
+      --accent-hover: #1d4ed8;
+      --success-color: #16a34a;
+      --danger-color: #dc2626;
+      --item-bg: #f1f5f9;
+      --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #0b0f17;
+      --card-bg: #151c28;
+      --text-color: #f1f5f9;
+      --text-sub: #94a3b8;
+      --border-color: #273549;
+      --accent-color: #38bdf8;
+      --accent-hover: #0284c7;
+      --success-color: #22c55e;
+      --danger-color: #ef4444;
+      --item-bg: #0f172a;
+      --shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-color); display: flex; justify-content: center; padding: 24px 16px; min-height: 100vh; transition: background-color 0.2s, color 0.2s; }
+    .container { width: 100%; max-width: 780px; display: flex; flex-direction: column; gap: 20px; }
+    
+    .header-bar-grid {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      grid-template-rows: auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+    .header-col-left-1 { grid-column: 1; grid-row: 1; justify-self: start; }
+    .header-col-left-2 { grid-column: 1; grid-row: 2; justify-self: start; }
+    .header-col-center { grid-column: 2; grid-row: 1 / span 2; justify-self: center; text-align: center; }
+    .header-col-right-1 { grid-column: 3; grid-row: 1; justify-self: end; }
+    .header-col-right-2 { grid-column: 3; grid-row: 2; justify-self: end; display: flex; gap: 6px; }
+
+    .select-sm { padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color); cursor: pointer; }
+
+    .btn-header {
+      display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; font-size: 0.8rem; font-weight: 600;
+      border-radius: 6px; border: 1px solid var(--border-color); background-color: var(--card-bg); color: var(--text-color); cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-header:hover { background-color: var(--item-bg); border-color: var(--text-color); }
+    .btn-install-app { background-color: var(--text-color); color: var(--card-bg); border: none; }
+    .btn-install-app:hover { opacity: 0.9; }
+
+    .header { text-align: center; margin: 10px 0 5px 0; }
+    .header h1 { font-size: 1.8rem; font-weight: 700; color: var(--text-color); margin-bottom: 8px; letter-spacing: -0.5px; }
+    .header p { font-size: 0.9rem; color: var(--text-sub); }
+
+    .badge-group { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+    .badge { font-size: 0.75rem; font-weight: 600; padding: 4px 12px; border-radius: 4px; background-color: var(--item-bg); color: var(--text-sub); border: 1px solid var(--border-color); }
+
+    .tab-navigation {
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 16px;
+      overflow-x: auto;
+    }
+    .tab-btn {
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      background: none;
+      border: none;
+      border-bottom: 3px solid transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover { color: var(--text-color); }
+    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card { background-color: var(--card-bg); border-radius: 12px; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow); }
+    .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+
+    label { font-size: 0.85rem; font-weight: 600; color: var(--text-sub); display: block; margin-bottom: 8px; }
+    
+    select.main-select, input.input-text {
+      width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color);
+      background-color: var(--bg-color); color: var(--text-color); font-size: 0.95rem; margin-bottom: 14px;
+      outline: none; font-weight: 500;
+    }
+
+    .select-field {
+      width: 100%; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border-color);
+      background-color: var(--bg-color); color: var(--text-color); font-size: 0.88rem; font-weight: 500;
+      outline: none;
+    }
+
+    .converter-settings {
+      background-color: var(--item-bg);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--border-color);
+      margin-bottom: 18px;
+    }
+    .setting-section { margin-bottom: 16px; }
+    .setting-section:last-child { margin-bottom: 0; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .label-text { font-weight: 600; font-size: 0.85rem; color: var(--text-sub); }
+
+    .dashed-box {
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    
+    .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; cursor: pointer; }
+    .checkbox-field {
+      width: 18px; height: 18px; cursor: pointer; flex-shrink: 0;
+    }
+    .checkbox-label { font-weight: 600; font-size: 0.88rem; color: var(--text-color); cursor: pointer; user-select: none; }
+
+    .range-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+    .range-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-sub); }
+    .input-range { width: 100%; accent-color: var(--accent-color); cursor: pointer; }
+
+    .eq-bands-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .eq-band-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .eq-band-col input[type="range"] {
+      writing-mode: bt-lr;
+      -webkit-appearance: slider-vertical;
+      width: 24px;
+      height: 100px;
+    }
+    .eq-freq-label { font-size: 0.75rem; color: var(--text-sub); font-weight: 600; }
+    .eq-val-label { font-size: 0.75rem; color: var(--text-color); font-weight: 700; }
+
+    .trimming-inputs, .rename-inputs { display: flex; align-items: center; gap: 8px; margin-top: 6px; width: 100%; }
+    .trimming-inputs input, .rename-inputs input {
+      flex: 1; min-width: 0; width: 100%; padding: 10px 12px; font-size: 0.85rem;
+      background-color: var(--bg-color); color: var(--text-color);
+      border: 1px solid var(--border-color); border-radius: 8px;
+    }
+    .meta-editor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+
+    .upload-options { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .upload-btn {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 18px 12px; border: 2px dashed var(--border-color); border-radius: 8px;
+      background-color: var(--item-bg); color: var(--text-color); font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; text-align: center; position: relative; transition: border-color 0.2s;
+    }
+    .upload-btn:hover { border-color: var(--accent-color); }
+    .upload-btn input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+    .drop-zone {
+      border: 2px dashed var(--border-color); border-radius: 8px; padding: 24px; text-align: center;
+      background-color: var(--item-bg); position: relative; transition: border-color 0.2s; font-size: 0.85rem; color: var(--text-sub);
+      margin-bottom: 16px;
+    }
+    .drop-zone.dragover { border-color: var(--accent-color); background-color: var(--bg-color); }
+    .drop-zone input[type=file] { position: absolute; left: 0; top: 0; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 14px;
+      background-color: var(--text-color); color: var(--card-bg); font-weight: 600; font-size: 0.95rem;
+      border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s;
+    }
+    .btn:hover { opacity: 0.9; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-primary { background-color: var(--accent-color); color: #ffffff; margin-top: 12px; }
+    .btn-primary:hover { background-color: var(--accent-hover); }
+
+    .spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3); border-radius: 50%; border-top-color: #fff;
+      animation: spin 0.8s linear infinite; display: inline-block;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast-notification {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+      background-color: var(--text-color); color: var(--card-bg); padding: 12px 24px;
+      border-radius: 30px; font-size: 0.9rem; font-weight: 600;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.2); z-index: 2000; opacity: 0;
+      transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55); pointer-events: none;
+    }
+    .toast-notification.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    /* 進捗バーの強化 */
+    .progress-section { margin: 14px 0; }
+    .progress-header { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 600; color: var(--text-sub); margin-bottom: 6px; }
+    .progress-bar-bg { width: 100%; height: 8px; background-color: var(--border-color); border-radius: 4px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; width: 0%; background-color: var(--accent-color); transition: width 0.15s ease-out; }
+
+    .file-list { max-height: 360px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .file-item {
+      display: flex; flex-direction: column; gap: 8px; padding: 12px; background-color: var(--item-bg);
+      border-radius: 6px; font-size: 0.85rem; border: 1px solid var(--border-color);
+    }
+    .file-header { display: flex; align-items: center; justify-content: space-between; width: 100%; flex-wrap: wrap; gap: 6px; }
+    .file-info { display: flex; flex-direction: column; gap: 2px; overflow: hidden; padding-right: 10px; flex: 1; min-width: 180px; }
+    .file-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .file-meta { font-size: 0.75rem; color: var(--text-sub); }
+    .file-actions { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+    
+    .btn-sm {
+      padding: 6px 10px; font-size: 0.75rem; border-radius: 4px; border: 1px solid var(--border-color);
+      background-color: var(--card-bg); color: var(--text-color); font-weight: 500; cursor: pointer; flex-shrink: 0;
+    }
+    .btn-sm.btn-success { background-color: var(--success-color); color: #fff; border: none; }
+    .btn-sm.btn-danger { background-color: var(--danger-color); color: #fff; border: none; }
+    .btn-sm:disabled { opacity: 0.5; cursor: default; }
+
+    .preview-container { width: 100%; margin-top: 8px; display: none; }
+    .preview-container video, .preview-container audio { width: 100%; max-height: 220px; border-radius: 6px; background-color: #000; }
+
+    .waveform-container {
+      position: relative; width: 100%; height: 120px; background-color: var(--bg-color);
+      border: 1px solid var(--border-color); border-radius: 8px; margin: 12px 0; overflow: hidden; cursor: crosshair;
+    }
+    .waveform-canvas { width: 100%; height: 100%; display: block; }
+
+    .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border-color); }
+    .clear-link { font-size: 0.75rem; color: var(--text-sub); background: none; border: none; cursor: pointer; text-decoration: underline; }
+    .clear-link:hover { color: var(--danger-color); }
+
+    .info-card-title { font-size: 1.05rem; font-weight: 700; margin-bottom: 12px; color: var(--text-color); }
+    .info-box-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .info-sub-box { background-color: var(--item-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; }
+    .info-sub-box h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 4px; color: var(--text-color); }
+    .info-sub-box p { font-size: 0.8rem; color: var(--text-sub); line-height: 1.5; }
+
+    .info-text-block { font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; margin-bottom: 12px; }
+    .info-text-block strong { color: var(--text-color); }
+    
+    .info-list { padding-left: 20px; font-size: 0.85rem; color: var(--text-sub); line-height: 1.6; }
+    .info-list li { margin-bottom: 6px; }
+    .info-list strong { color: var(--text-color); }
+
+    .faq-details { background-color: var(--item-bg); border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+    .faq-summary { font-size: 0.9rem; font-weight: 700; color: var(--text-color); padding: 12px 16px; cursor: pointer; outline: none; user-select: none; display: flex; align-items: center; justify-content: space-between; }
+    .faq-summary::-webkit-details-marker { display: none; }
+    .faq-content { font-size: 0.85rem; color: var(--text-sub); padding: 0 16px 14px 16px; line-height: 1.6; border-top: 1px solid var(--border-color); padding-top: 10px; }
+
+    .footer { text-align: center; font-size: 0.75rem; color: var(--text-sub); margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .footer-links { display: flex; justify-content: center; gap: 16px; }
+    .footer a { color: var(--text-sub); text-decoration: underline; cursor: pointer; }
+    .footer a:hover { color: var(--text-color); }
+    .footer-credits { font-size: 0.7rem; color: var(--text-sub); line-height: 1.4; }
+
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: rgba(0, 0, 0, 0.6); display: flex; justify-content: center; align-items: center; z-index: 1000; padding: 20px;
+    }
+    .modal-box {
+      background-color: var(--card-bg); color: var(--text-color); border-radius: 12px; max-width: 540px; width: 100%;
+      max-height: 85vh; display: flex; flex-direction: column; padding: 24px; border: 1px solid var(--border-color); box-shadow: var(--shadow);
+    }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-shrink: 0; }
+    .modal-title { font-size: 1.05rem; font-weight: 700; }
+    .modal-close { background: none; border: none; font-size: 1.2rem; cursor: pointer; color: var(--text-sub); }
+    .modal-body { font-size: 0.88rem; line-height: 1.6; color: var(--text-sub); margin-bottom: 16px; overflow-y: auto; flex: 1; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0; align-items: center; }
+
+    .terms-split-container {
+      display: flex;
+      gap: 12px;
+      height: 240px;
+      margin-bottom: 14px;
+    }
+    .terms-split-box {
+      flex: 1;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      overflow-y: auto;
+      background-color: var(--item-bg);
+      font-size: 0.78rem;
+      line-height: 1.5;
+    }
+    .terms-split-box h5 {
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+      color: var(--text-color);
+    }
+
+    .alert-box-warning {
+      background-color: #fffbeb;
+      border: 1px solid #fde68a;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 0.78rem;
+      color: #b45309;
+      margin-top: 10px;
+    }
+    [data-theme="dark"] .alert-box-warning {
+      background-color: #271e05;
+      border-color: #78350f;
+      color: #fcd34d;
+    }
+
+    @media (max-width: 600px) {
+      .header-bar-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
+      .header-col-left-1 { grid-column: 1; grid-row: 1; }
+      .header-col-left-2 { grid-column: 1; grid-row: 2; }
+      .header-col-right-1 { grid-column: 2; grid-row: 1; }
+      .header-col-right-2 { grid-column: 2; grid-row: 2; }
+      .header-col-center { grid-column: 1 / span 2; grid-row: 3; margin-top: 6px; }
+      .terms-split-container { flex-direction: column; height: 280px; }
+      .upload-options { grid-template-columns: 1fr; }
+      .meta-editor-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div id="toastNotification" class="toast-notification">完了しました</div>
+
+  <div class="container" id="mainAppContainer">
+    <div class="header-bar-grid">
+      <div class="header-col-left-1">
+        <button class="btn-header" id="btnTutorial">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span data-i18n="tutorialBtn">使い方</span>
+        </button>
+      </div>
+
+      <div class="header-col-left-2">
+        <button class="btn-header" id="btnShareApp">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          <span data-i18n="shareBtn">共有</span>
+        </button>
+      </div>
+
+      <div class="header-col-center">
+        <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-color);" id="headerDatetime">--/--/---- --:--:--</div>
+      </div>
+
+      <div class="header-col-right-1">
+        <button class="btn-header btn-install-app" id="btnDownloadAppPack">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span data-i18n="installBtn">オフライン用パックを取得</span>
+        </button>
+      </div>
+
+      <div class="header-col-right-2">
+        <select id="langSelect" class="select-sm">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+        </select>
+        <select id="themeSelect" class="select-sm">
+          <option value="auto">Auto (OS)</option>
+          <option value="light">Light</option>
+          <option value="dark">Dark</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="header">
+      <h1 data-i18n="title">Universal Media Converter Pro</h1>
+      <p data-i18n="subTitle">サーバーにファイルを送信せず、ブラウザだけで安全・無制限に一括変換できる高度なメディア変換ツールです。</p>
+      <div class="badge-group">
+        <span class="badge" data-i18n="bdgLocal">100% 端末内処理</span>
+        <span class="badge" data-i18n="bdgFast">高速WebM/MP4最適化</span>
+        <span class="badge" data-i18n="bdgProgress">リアルタイム進捗</span>
+        <span class="badge" data-i18n="bdgMix">異種形式一括処理</span>
+      </div>
+    </div>
+
+    <!-- 共通ファイルアップロードエリア -->
+    <div class="card">
+      <label data-i18n="lblSelectConvertFiles">1. 処理するファイルの読み込み・追加:</label>
+      <div class="upload-options">
+        <div class="upload-btn">
+          <span data-i18n="btnFiles">ファイルを選択 (複数可)</span>
+          <input type="file" id="fileInput" accept=".mp4,.mov,.avi,.mkv,.wmv,.flv,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac" multiple>
+        </div>
+        <div class="upload-btn">
+          <span data-i18n="btnFolders">フォルダを選択 (複数可)</span>
+          <input type="file" id="folderInput" webkitdirectory directory multiple>
+        </div>
+      </div>
+
+      <div class="drop-zone" id="dropZone">
+        <span data-i18n="txtDrop">または、ここにファイル/フォルダをドラッグ＆ドロップ</span>
+        <input type="file" id="dropInput" accept=".mp4,.mov,.avi,.mkv,.wmv,.flv,.webm,.mp3,.wav,.m4a,.aac,.ogg,.flac" multiple>
+      </div>
+    </div>
+
+    <!-- 機能切り替えタブ -->
+    <div class="tab-navigation">
+      <button class="tab-btn active" id="tabConvertBtn" data-i18n="tabConvert">変換</button>
+      <button class="tab-btn" id="tabAudioEditBtn" data-i18n="tabAudioEdit">オーディオ加工</button>
+      <button class="tab-btn" id="tabMetaBtn" data-i18n="tabMeta">メタタグ編集</button>
+    </div>
+
+    <!-- TAB 1: 変換画面 -->
+    <div class="tab-content active" id="tabConvertContent">
+      <div class="card">
+        <label data-i18n="lblSelectConvertTarget">2. 変換処理する対象ファイルを選択:</label>
+        <select id="convertTargetSelect" class="main-select">
+          <option value="all" data-i18n="optConvertAll">-- 読み込んだ全てのファイルを一括変換 --</option>
+        </select>
+
+        <label data-i18n="lblFormat">3. 変換後の出力形式を選択:</label>
+        <select id="outputFormat" class="main-select">
+          <optgroup label="動画フォーマット (Video)" data-i18n-label="grpVideoLabel">
+            <option value="mp4" selected data-i18n="optMp4">MP4 (.mp4) - H.264/AAC 高速汎用動画</option>
+            <option value="webm" data-i18n="optWebm">WebM (.webm) - VP8/Vorbis Web向け形式</option>
+            <option value="gif" data-i18n="optGif">GIF (.gif) - アニメーション画像</option>
+          </optgroup>
+          <optgroup label="音声フォーマット (Audio)" data-i18n-label="grpAudioLabel">
+            <option value="mp3" data-i18n="optMp3">MP3 (.mp3) - 標準音声</option>
+            <option value="wav" data-i18n="optWav">WAV (.wav) - 高音質非圧縮</option>
+            <option value="m4a" data-i18n="optM4a">M4A (.m4a) - AAC高品質音声</option>
+            <option value="aac" data-i18n="optAac">AAC (.aac) - 高圧縮音声</option>
+            <option value="ogg" data-i18n="optOgg">OGG (.ogg) - オープン形式</option>
+          </optgroup>
+        </select>
+
+        <label data-i18n="lblOptTitle">4. 変換オプション:</label>
+        <div class="converter-settings">
+          <div class="setting-section">
+            <div class="label-row">
+              <span class="label-text" data-i18n="lblQuality">エンコード品質・プリセット:</span>
+            </div>
+            <select id="qualityPreset" class="select-field">
+              <option value="fast" selected data-i18n="optQualFast">高速エンコード (推奨: ultrafast)</option>
+              <option value="balanced" data-i18n="optQualBalanced">標準バランス (superfast / 192k)</option>
+              <option value="high" data-i18n="optQualHigh">高画質・高音質 (veryfast / 320k)</option>
+            </select>
+          </div>
+
+          <div class="setting-section">
+            <div class="label-row">
+              <span class="label-text" data-i18n="lblRenameTitle">ファイル名変更（リネーム）:</span>
+            </div>
+            <select id="renameMode" class="select-field" style="margin-bottom: 6px;">
+              <option value="none" selected data-i18n="optRenameNone">変更しない (元の名前を維持)</option>
+              <option value="affix" data-i18n="optRenameAffix">前後に文字列を追加 (接頭辞 / 接尾辞)</option>
+              <option value="custom" data-i18n="optRenameCustom">指定の名前に一括変更 (連番付き)</option>
+            </select>
+
+            <div id="renameAffixBox" class="rename-inputs" style="display: none;">
+              <input type="text" id="renamePrefix" data-i18n-placeholder="renamePrefixPh" placeholder="先頭に付加 (例: converted_)">
+              <input type="text" id="renameSuffix" data-i18n-placeholder="renameSuffixPh" placeholder="末尾に付加 (例: _mp4)">
+            </div>
+
+            <div id="renameCustomBox" class="rename-inputs" style="display: none;">
+              <input type="text" id="renameCustomName" data-i18n-placeholder="renameCustomNamePh" placeholder="ファイル名 (例: video)">
+              <span style="font-size: 0.8rem; color: var(--text-sub);">_01, _02...</span>
+            </div>
+          </div>
+
+          <div class="setting-section">
+            <div class="label-row">
+              <span class="label-text" data-i18n="lblAudioAdjust">音声調整:</span>
+            </div>
+            <label class="checkbox-row" for="chkNormalize">
+              <input type="checkbox" id="chkNormalize" class="checkbox-field">
+              <span class="checkbox-label" data-i18n="lblNormalize">音量を均一化 (ノーマライズ loudnorm)</span>
+            </label>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="startConversionBtn" disabled>
+          <span id="btnText" data-i18n="startConversion">変換処理を開始する</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB 2: オーディオ加工画面 -->
+    <div class="tab-content" id="tabAudioEditContent">
+      <div class="card">
+        <div class="section-title">
+          <span data-i18n="audioTabTitle">オーディオ加工・波形編集</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;">
+          選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ）の編集が可能です。
+        </p>
+
+        <label>加工対象のファイルを選択:</label>
+        <select id="audioTargetSelect" class="main-select">
+          <option value="">-- 編集するファイルを選択してください --</option>
+        </select>
+
+        <div id="audioEditorForm" class="converter-settings">
+          <div class="setting-section">
+            <div class="label-row">
+              <span class="label-text">波形表示と切り取り指定 (ドラッグで範囲指定):</span>
+            </div>
+            
+            <div class="waveform-container" id="waveformContainer">
+              <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+            </div>
+
+            <div class="trimming-inputs">
+              <input type="text" id="fxTrimStart" placeholder="開始 (秒)" readonly>
+              <span>～</span>
+              <input type="text" id="fxTrimEnd" placeholder="終了 (秒)" readonly>
+              <button class="btn-sm" id="btnResetTrim">範囲解除</button>
+            </div>
+          </div>
+
+          <div class="range-group">
+            <div class="range-header"><span>ピッチ (音高):</span> <span id="fxPitchVal">0 半音</span></div>
+            <input type="range" id="fxPitch" class="input-range" min="-12" max="12" value="0" step="1">
+          </div>
+
+          <div class="range-group">
+            <div class="range-header"><span>音量 (ボリューム):</span> <span id="fxVolVal">100%</span></div>
+            <input type="range" id="fxVol" class="input-range" min="0" max="200" value="100" step="5">
+          </div>
+
+          <div class="range-group">
+            <div class="range-header"><span>再生速度:</span> <span id="fxSpeedVal">1.0x</span></div>
+            <input type="range" id="fxSpeed" class="input-range" min="0.5" max="2.0" value="1.0" step="0.05">
+          </div>
+
+          <div class="dashed-box">
+            <div class="setting-section" style="margin-bottom:10px;">
+              <label>EQ プリセット選択:</label>
+              <select id="eqPresetSelect" class="select-field">
+                <option value="flat">フラット（デフォルト）</option>
+                <option value="vocal">ボーカル強調</option>
+                <option value="bass">低音ブースト</option>
+                <option value="radio">ラジオ風</option>
+              </select>
+            </div>
+
+            <div>
+              <label>グラフィックイコライザー (5 Band EQ):</label>
+              <div class="eq-bands-grid">
+                <div class="eq-band-col">
+                  <span class="eq-val-label" id="eqVal60">0dB</span>
+                  <input type="range" id="eqBand60" min="-20" max="20" value="0" step="1">
+                  <span class="eq-freq-label">60Hz</span>
+                </div>
+                <div class="eq-band-col">
+                  <span class="eq-val-label" id="eqVal230">0dB</span>
+                  <input type="range" id="eqBand230" min="-20" max="20" value="0" step="1">
+                  <span class="eq-freq-label">230Hz</span>
+                </div>
+                <div class="eq-band-col">
+                  <span class="eq-val-label" id="eqVal910">0dB</span>
+                  <input type="range" id="eqBand910" min="-20" max="20" value="0" step="1">
+                  <span class="eq-freq-label">910Hz</span>
+                </div>
+                <div class="eq-band-col">
+                  <span class="eq-val-label" id="eqVal4k">0dB</span>
+                  <input type="range" id="eqBand4k" min="-20" max="20" value="0" step="1">
+                  <span class="eq-freq-label">4kHz</span>
+                </div>
+                <div class="eq-band-col">
+                  <span class="eq-val-label" id="eqVal14k">0dB</span>
+                  <input type="range" id="eqBand14k" min="-20" max="20" value="0" step="1">
+                  <span class="eq-freq-label">14kHz</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:12px;">
+            <button class="btn" id="btnPreviewFx" style="flex:1; background-color:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">試聴再生 / 停止</button>
+            <button class="btn btn-primary" id="btnExportAudio" style="flex:1;">
+              <span id="btnExportText">加工・切り取り音声を書き出し</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: メタタグ編集画面 -->
+    <div class="tab-content" id="tabMetaContent">
+      <div class="card">
+        <div class="section-title">
+          <span data-i18n="metaTabTitle">メタタグ（ID3/メタデータ）編集</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;">
+          動画や音声ファイルのメタタグ情報をブラウザ上で直接更新します。
+        </p>
+
+        <label>編集対象のファイルを選択:</label>
+        <select id="metaTargetSelect" class="main-select">
+          <option value="">-- 編集するファイルを選択してください --</option>
+        </select>
+
+        <div id="metaEditorForm" class="converter-settings">
+          <div class="meta-editor-grid">
+            <div>
+              <label>タイトル / 曲名:</label>
+              <input type="text" id="editMetaTitle" class="input-text">
+            </div>
+            <div>
+              <label>アーティスト:</label>
+              <input type="text" id="editMetaArtist" class="input-text">
+            </div>
+            <div>
+              <label>アルバム:</label>
+              <input type="text" id="editMetaAlbum" class="input-text">
+            </div>
+            <div>
+              <label>ジャンル:</label>
+              <input type="text" id="editMetaGenre" class="input-text">
+            </div>
+            <div>
+              <label>年 (Year):</label>
+              <input type="text" id="editMetaYear" class="input-text">
+            </div>
+            <div>
+              <label>トラック番号:</label>
+              <input type="text" id="editMetaTrack" class="input-text">
+            </div>
+          </div>
+          <button class="btn btn-primary" id="saveMetaBtn">
+            <span id="btnMetaText">メタタグを更新して保存</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 変換ステータス・進捗表示・ファイルリスト -->
+    <div class="card">
+      <div class="section-title">
+        <span data-i18n="txtProgressTitle">変換・処理ステータス</span>
+        <span id="counterLabel" style="font-size:0.85rem; color:var(--text-sub);">0 / 0</span>
+      </div>
+
+      <!-- 詳細進捗バーエリア -->
+      <div class="progress-section">
+        <div class="progress-header">
+          <span id="progressStatusText">待機中</span>
+          <span id="progressPercentText">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <div class="file-list" id="fileList"></div>
+
+      <button class="btn" id="downloadAllBtn" data-i18n="downloadAll" style="margin-top: 16px;" disabled>
+        変換済みファイルを一括ZIPダウンロード
+      </button>
+
+      <div class="card-footer">
+        <button class="clear-link" id="clearListBtn">リストを一括クリア</button>
+        <button class="clear-link" id="clearCacheBtn">キャッシュを消去</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="info-card-title" data-i18n="featTitle">本ツールの特徴</div>
+      <div class="info-box-grid">
+        <div class="info-sub-box">
+          <h4 data-i18n="feat1H">完全ローカル ＆ 完全無制限</h4>
+          <p data-i18n="feat1P">サーバーへファイルをアップロードしない安全設計。容量制限や個数制限なく利用できます。</p>
+        </div>
+        <div class="info-sub-box">
+          <h4 data-i18n="feat2H">異種形式の一括ミックス処理</h4>
+          <p data-i18n="feat2P">MP4, MOV, AVI など異なる拡張子が混在したフォルダも指定形式へ一括で統一変換します。</p>
+        </div>
+        <div class="info-sub-box">
+          <h4 data-i18n="feat3H">オフライン ＆ PWAアプリ対応</h4>
+          <p data-i18n="feat3P">ブラウザ経由で端末へインストール可能。ネットワーク接続がない環境でも動作します。</p>
+        </div>
+        <div class="info-sub-box">
+          <h4 data-i18n="feat4H">途中停止からの自動復元</h4>
+          <p data-i18n="feat4P">ブラウザの終了やメモリクラッシュ時も、処理済みデータを保存し続きから自動スタートします。</p>
+        </div>
+        <div class="info-sub-box">
+          <h4 data-i18n="feat5H">WebMからMP4への超高速・高互換変換</h4>
+          <p data-i18n="feat5P">H.264の<code>-preset ultrafast</code>、<code>-tune zerolatency</code>、<code>-pix_fmt yuv420p</code>を最適適用し、ブラウザ内WASMでのCPU負荷を最小化。フリーズやメモリ不足を根本解消し高速変換を実現します。</p>
+        </div>
+        <div class="info-sub-box">
+          <h4 data-i18n="feat6H">リアルタイム進捗率表示・波形編集・メタタグ編集</h4>
+          <p data-i18n="feat6P">進行度イベントを常時キャッチし0%〜100%の進捗バーを可視化。さらに波形トリミング・イコライザー加工・ID3タグ編集もすべて端末内で完結します。</p>
+        </div>
+      </div>
+
+      <div class="info-card-title" style="margin-top: 18px;" data-i18n="envTitle">対応フォーマットおよび動作環境</div>
+      <div class="info-text-block">
+        <span data-i18n="envInput">入力形式: MP4, MOV, AVI, MKV, WMV, FLV, WEBM, MP3, WAV, M4A, AAC, OGG, FLAC ほか多数</span><br>
+        <span data-i18n="envOutput">出力形式: MP3, WAV, M4A, AAC, OGG, MP4, WebM, GIF</span><br>
+        <span data-i18n="envRec">推奨環境: Google Chrome, Microsoft Edge, Apple Safari, Mozilla Firefox（最新版）</span>
+      </div>
+
+      <div class="info-card-title" style="margin-top: 18px;" data-i18n="howtoTitle">使い方</div>
+      <ol class="info-list">
+        <li><span data-i18n="howto1">変換対象ファイルを読み込み、選択します。</span></li>
+        <li><span data-i18n="howto2">出力フォーマットおよび各種オプションを設定します。</span></li>
+        <li><span data-i18n="howto3">処理完了後、個別に「保存」または「一括ZIPダウンロード」を実行します。</span></li>
+      </ol>
+
+      <div class="info-card-title" style="margin-top: 24px;" data-i18n="faqSectionTitle">Q&A（よくある質問）</div>
+      
+      <details class="faq-details">
+        <summary class="faq-summary"><span data-i18n="faq1Q">Q1: 本当にファイルが外部に送信されませんか？</span><span>▼</span></summary>
+        <div class="faq-content" data-i18n="faq1A">はい、100%ユーザーのブラウザ内（クライアントサイド）だけで処理が行われます。インターネットを介して外部サーバーにファイルがアップロードされることは一切ありませんので、プライベートなファイルも安心して変換できます。</div>
+      </details>
+
+      <details class="faq-details">
+        <summary class="faq-summary"><span data-i18n="faq2Q">Q2: 変換できるファイルの容量や個数に制限はありますか？</span><span>▼</span></summary>
+        <div class="faq-content" data-i18n="faq2A">サーバー側の制限はありませんが、お使いの端末のメモリ（RAM）容量に依存します。非常に大容量のファイルや多数のファイルを一度に処理する場合、ブラウザのメモリ不足によりエラーが発生する可能性があります。</div>
+      </details>
+
+      <details class="faq-details">
+        <summary class="faq-summary"><span data-i18n="faq3Q">Q3: オフライン環境でも使えますか？</span><span>▼</span></summary>
+        <div class="faq-content" data-i18n="faq3A">はい。「オフライン用パックを取得」ボタンからダウンロードしていただくことで、インターネット接続がない環境でもローカルで快適にご利用いただけます。</div>
+      </details>
+
+      <details class="faq-details">
+        <summary class="faq-summary"><span data-i18n="faq4Q">Q4: WebMからMP4への変換が高速な理由は？</span><span>▼</span></summary>
+        <div class="faq-content" data-i18n="faq4A">libx264の<code>ultrafast</code>プリセット、遅延ゼロ設定（<code>-tune zerolatency</code>）、および標準カラーフォーマット（<code>yuv420p</code>）を精密に適用しているためです。余分な中間処理を省き、WebAssemblyの実行速度を最大限引き出しています。</div>
+      </details>
+    </div>
+
+    <div class="footer">
+      <div class="footer-links">
+        <a id="linkTermsTrigger" data-i18n="linkTerms">利用規約</a>
+        <a id="linkPrivacyTrigger" data-i18n="linkPrivacy">プライバシーポリシー</a>
+      </div>
+      <div class="footer-credits">
+        ©Gaomu_PC77 2026 | Powered by <a href="https://ffmpeg.org/" target="_blank" rel="noopener">FFmpeg.wasm</a> & <a href="https://stuk.github.io/jszip/" target="_blank" rel="noopener">JSZip</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 初回利用規約・プライバシーポリシー同意モーダル -->
+  <div class="modal-overlay" id="firstLaunchModal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" data-i18n="firstTermsTitle">利用規約とプライバシーポリシーの確認</div>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom: 10px; font-size: 0.85rem;" data-i18n="firstTermsNotice">本ツールをご利用いただく前に、以下の利用規約およびプライバシーポリシーをご確認ください。</p>
+        <div class="terms-split-container">
+          <div class="terms-split-box" id="modalTermsContent"></div>
+          <div class="terms-split-box" id="modalPrivacyContent"></div>
+        </div>
+        <div class="alert-box-warning" data-i18n="firstTermsWarning">
+          ⚠️ 注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。
+        </div>
+        <label class="checkbox-row" for="chkAgreeTerms" style="justify-content: center; margin-top: 12px;">
+          <input type="checkbox" id="chkAgreeTerms" class="checkbox-field">
+          <span class="checkbox-label" style="font-size: 0.85rem; font-weight: 600;" data-i18n="chkAgreeLabel">利用規約とプライバシーポリシーに同意します</span>
+        </label>
+      </div>
+      <div class="modal-footer" style="justify-content: center;">
+        <button class="btn-sm btn-success" id="btnAgreeStart" disabled style="padding: 9px 28px; font-size: 0.9rem; font-weight: 600;" data-i18n="btnAgreeStart">同意して利用開始</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 汎用モーダル -->
+  <div class="modal-overlay" id="customModal" style="display: none;">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title" id="customModalTitle">お知らせ</div>
+        <button class="modal-close" id="customModalClose">✕</button>
+      </div>
+      <div class="modal-body" id="customModalBody"></div>
+      <div class="modal-footer">
+        <button class="btn-sm btn-success" id="customModalOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 多言語辞書
+    const i18n = {
+      ja: {
+        pageTitle: "Universal Media Converter Pro",
+        title: "Universal Media Converter Pro",
+        subTitle: "サーバーにファイルを送信せず、ブラウザだけで安全・無制限に一括変換できる高度なメディア変換ツールです。",
+        tutorialBtn: "使い方",
+        shareBtn: "共有",
+        installBtn: "オフライン用パックを取得",
+        bdgLocal: "100% 端末内処理",
+        bdgFast: "高速WebM/MP4最適化",
+        bdgProgress: "リアルタイム進捗",
+        bdgMix: "異種形式一括処理",
+        tabConvert: "変換",
+        tabAudioEdit: "オーディオ加工",
+        tabMeta: "メタタグ編集",
+        lblSelectConvertFiles: "1. 処理するファイルの読み込み・追加:",
+        lblSelectConvertTarget: "2. 変換処理する対象ファイルを選択:",
+        optConvertAll: "-- 読み込んだ全てのファイルを一括変換 --",
+        lblFormat: "3. 変換後の出力形式を選択:",
+        grpVideoLabel: "動画フォーマット (Video)",
+        grpAudioLabel: "音声フォーマット (Audio)",
+        optMp4: "MP4 (.mp4) - H.264/AAC 高速汎用動画",
+        optWebm: "WebM (.webm) - VP8/Vorbis Web向け形式",
+        optGif: "GIF (.gif) - アニメーション画像",
+        optMp3: "MP3 (.mp3) - 標準音声",
+        optWav: "WAV (.wav) - 高音質非圧縮",
+        optM4a: "M4A (.m4a) - AAC高品質音声",
+        optAac: "AAC (.aac) - 高圧縮音声",
+        optOgg: "OGG (.ogg) - オープン形式",
+        lblOptTitle: "4. 変換オプション:",
+        lblQuality: "エンコード品質・プリセット:",
+        optQualFast: "高速エンコード (推奨: ultrafast)",
+        optQualBalanced: "標準バランス (superfast / 192k)",
+        optQualHigh: "高画質・高音質 (veryfast / 320k)",
+        lblRenameTitle: "ファイル名変更（リネーム）:",
+        optRenameNone: "変更しない (元の名前を維持)",
+        optRenameAffix: "前後に文字列を追加 (接頭辞 / 接尾辞)",
+        optRenameCustom: "指定の名前に一括変更 (連番付き)",
+        renamePrefixPh: "先頭に付加 (例: converted_)",
+        renameSuffixPh: "末尾に付加 (例: _mp4)",
+        renameCustomNamePh: "ファイル名 (例: video)",
+        lblAudioAdjust: "音声調整:",
+        lblNormalize: "音量を均一化 (ノーマライズ loudnorm)",
+        targetPrefixPending: "[対象]",
+        targetPrefixSaved: "[保存済み]",
+        targetPrefixWaiting: "[待機中]",
+        optTargetDefault: "-- 編集するファイルを選択してください --",
+        btnFiles: "ファイルを選択 (複数可)",
+        btnFolders: "フォルダを選択 (複数可)",
+        txtDrop: "または、ここにファイル/フォルダをドラッグ＆ドロップ",
+        startConversion: "変換処理を開始する",
+        txtProgressTitle: "変換・処理ステータス",
+        downloadAll: "変換済みファイルを一括ZIPダウンロード",
+        linkTerms: "利用規約",
+        linkPrivacy: "プライバシーポリシー",
+        firstTermsTitle: "利用規約とプライバシーポリシーの確認",
+        firstTermsNotice: "本ツールをご利用いただく前に、以下の利用規約およびプライバシーポリシーをご確認ください。",
+        firstTermsWarning: "⚠️ 注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。",
+        chkAgreeLabel: "利用規約とプライバシーポリシーに同意します",
+        btnAgreeStart: "同意して利用開始",
+        featTitle: "本ツールの特徴",
+        feat1H: "完全ローカル ＆ 完全無制限",
+        feat1P: "サーバーへファイルをアップロードしない安全設計。容量制限や個数制限なく利用できます。",
+        feat2H: "異種形式の一括ミックス処理",
+        feat2P: "MP4, MOV, AVI など異なる拡張子が混在したフォルダも指定形式へ一括で統一変換します。",
+        feat3H: "オフライン ＆ PWAアプリ対応",
+        feat3P: "ブラウザ経由で端末へインストール可能。ネットワーク接続がない環境でも動作します。",
+        feat4H: "途中停止からの自動復元",
+        feat4P: "ブラウザの終了やメモリクラッシュ時も、処理済みデータを保存し続きから自動スタートします。",
+        feat5H: "WebMからMP4への超高速・高互換変換",
+        feat5P: "H.264の -preset ultrafast、-tune zerolatency、-pix_fmt yuv420p を最適適用し、ブラウザ内WASMでのCPU負荷を最小化。フリーズやメモリ不足を根本解消し高速変換を実現します。",
+        feat6H: "リアルタイム進捗率表示・波形編集・メタタグ編集",
+        feat6P: "進行度イベントを常時キャッチし0%〜100%の進捗バーを可視化。さらに波形トリミング・イコライザー加工・ID3タグ編集もすべて端末内で完結します。",
+        envTitle: "対応フォーマットおよび動作環境",
+        envInput: "入力形式: MP4, MOV, AVI, MKV, WMV, FLV, WEBM, MP3, WAV, M4A, AAC, OGG, FLAC ほか多数",
+        envOutput: "出力形式: MP3, WAV, M4A, AAC, OGG, MP4, WebM, GIF",
+        envRec: "推奨環境: Google Chrome, Microsoft Edge, Apple Safari, Mozilla Firefox（最新版）",
+        howtoTitle: "使い方",
+        howto1: "変換対象ファイルを読み込み、選択します。",
+        howto2: "出力フォーマットおよび各種オプションを設定します。",
+        howto3: "処理完了後、個別に「保存」または「一括ZIPダウンロード」を実行します。",
+        faqSectionTitle: "Q&A（よくある質問）",
+        faq1Q: "Q1: 本当にファイルが外部に送信されませんか？",
+        faq1A: "はい、100%ユーザーのブラウザ内（クライアントサイド）だけで処理が行われます。インターネットを介して外部サーバーにファイルがアップロードされることは一切ありませんので、プライベートなファイルも安心して変換できます。",
+        faq2Q: "Q2: 変換できるファイルの容量や個数に制限はありますか？",
+        faq2A: "サーバー側の制限はありませんが、お使いの端末のメモリ（RAM）容量に依存します。非常に大容量のファイルや多数のファイルを一度に処理する場合、ブラウザのメモリ不足によりエラーが発生する可能性があります。",
+        faq3Q: "Q3: オフライン環境でも使えますか？",
+        faq3A: "はい。「オフライン用パックを取得」ボタンからダウンロードしていただくことで、インターネット接続がない環境でもローカルで快適にご利用いただけます。",
+        faq4Q: "Q4: WebMからMP4への変換が高速な理由は？",
+        faq4A: "libx264の ultrafast プリセット、遅延ゼロ設定（-tune zerolatency）、および標準カラーフォーマット（yuv420p）を精密に適用しているためです。余分な中間処理を省き、WebAssemblyの実行速度を最大限引き出しています。",
+        tutorialTitle: "使い方ガイド（チュートリアル）",
+        tutorialBody: `<ol style="padding-left:18px; line-height:1.7;">
+          <li><strong>ファイルの読み込み:</strong> 上部の「ファイルを選択」ボタンまたはドラッグ＆ドロップで対象メディアを追加します。</li>
+          <li><strong>変換形式・設定:</strong> 「MP4」「WebM」「MP3」などから出力形式を選択します。WebMからMP4への変換時は高速・高互換プリセット（ultrafast / yuv420p）が自動適用されます。</li>
+          <li><strong>変換開始と進捗可視化:</strong> 「変換処理を開始する」を押すと、リアルタイムに進捗パーセント（%）が表示されます。</li>
+          <li><strong>保存とダウンロード:</strong> 変換完了後、リストから「プレビュー再生」「個別保存」または「一括ZIPダウンロード」を行えます。</li>
+          <li><strong>波形編集 & メタタグ:</strong> 上部タブから切り替えて音声トリミング・EQ調整やメタタグ変更も可能です。</li>
+        </ol>`,
+        termsTitle: "利用規約",
+        termsBody: `<div style="line-height:1.6; font-size:0.8rem;">
+          <p><strong>第1条（適用）</strong><br>本規約は、Universal Media Converter Pro（以下「本ツール」）の利用に関する条件を定めるものです。</p>
+          <p style="margin-top:6px;"><strong>第2条（著作権・権利の遵守）</strong><br>利用者は、著作権法およびその他の知的財産権関連法令を遵守し、自らが権利を有するファイル、または正当な許諾を得たファイルのみを本ツールの変換対象とするものとします。</p>
+          <p style="margin-top:6px;"><strong>第3条（禁止事項）</strong><br>違法動画・音声の作成、第三者の権利侵害、法令または公序良俗に反する行為、本ツールの不正解析・改変を禁止します。</p>
+          <p style="margin-top:6px;"><strong>第4条（免責事項）</strong><br>本ツールの利用により生じたデータの破損、消失、端末の不具合、その他の損害について、開発者および運営者は一切の法的責任を負いません。重要なファイルは必ずバックアップを作成の上ご利用ください。</p>
+          <p style="margin-top:6px;"><strong>第5条（AI生成コード・コンテンツに関する免責）</strong><br>本ツールはAI技術の支援を受けて開発されたコードを含んでおり、提供する変換機能や出力結果の完全性、正確性、特定目的への適合性を明示的にも黙示的にも保証するものではありません。</p>
+          <p style="margin-top:6px;"><strong>第6条（サービスの変更・終了）</strong><br>本ツールは事前通知なく機能の変更、提供の中断または終了を行うことがあります。</p>
+          <p style="margin-top:6px;"><strong>第7条（準拠法・管轄）</strong><br>本規約の解釈にあたっては、日本法を準拠法とします。</p>
+        </div>`,
+        privacyTitle: "プライバシーポリシー",
+        privacyBody: `<div style="line-height:1.6; font-size:0.8rem;">
+          <p><strong>1. 完全ローカル（端末内）処理の原則</strong><br>本ツールはWebAssembly技術を用い、すべての動画・音声変換、波形解析、メタタグ編集をユーザーのブラウザ（端末内）で完結して実行します。処理対象のファイルデータが外部サーバーへアップロードまたは送信されることは一切ありません。</p>
+          <p style="margin-top:6px;"><strong>2. ローカルストレージおよびIndexedDBの利用</strong><br>本ツールはお客様の利便性向上のため、言語・テーマ等の設定値および変換結果のキャッシュを端末内のローカルストレージ（LocalStorage / IndexedDB）にのみ保存します。これらはブラウザの設定またはツール内の消去機能によりいつでも削除できます。</p>
+          <p style="margin-top:6px;"><strong>3. 外部ライブラリの読み込み</strong><br>アプリの実行に必要なFFmpeg WASMコアライブラリおよびCDNリソースのロード時を除き、利用者の個人情報や行動履歴をトラッキングまたは外部送信することはありません。</p>
+        </div>`
+      },
+      en: {
+        pageTitle: "Universal Media Converter Pro",
+        title: "Universal Media Converter Pro",
+        subTitle: "Fast, secure client-side media converter with WebM to MP4 optimization.",
+        tutorialBtn: "Tutorial",
+        shareBtn: "Share",
+        installBtn: "Offline Pack",
+        bdgLocal: "100% Client-Side",
+        bdgFast: "Fast WebM/MP4 Engine",
+        bdgProgress: "Real-time Progress",
+        bdgMix: "Batch Converter",
+        tabConvert: "Convert",
+        tabAudioEdit: "Audio FX",
+        tabMeta: "Metadata",
+        lblSelectConvertFiles: "1. Add Files:",
+        lblSelectConvertTarget: "2. Select Target:",
+        optConvertAll: "-- Convert All Loaded Files --",
+        lblFormat: "3. Output Format:",
+        grpVideoLabel: "Video Formats",
+        grpAudioLabel: "Audio Formats",
+        optMp4: "MP4 (.mp4) - H.264/AAC Fast Universal Video",
+        optWebm: "WebM (.webm) - VP8/Vorbis Web Format",
+        optGif: "GIF (.gif) - Animated Image",
+        optMp3: "MP3 (.mp3) - Standard Audio",
+        optWav: "WAV (.wav) - Lossless Uncompressed Audio",
+        optM4a: "M4A (.m4a) - AAC High Quality Audio",
+        optAac: "AAC (.aac) - High Compression Audio",
+        optOgg: "OGG (.ogg) - Open Vorbis Audio",
+        lblOptTitle: "4. Conversion Options:",
+        lblQuality: "Encoding Quality & Preset:",
+        optQualFast: "Fast Encoding (Recommended: ultrafast)",
+        optQualBalanced: "Standard Balance (superfast / 192k)",
+        optQualHigh: "High Quality (veryfast / 320k)",
+        lblRenameTitle: "Rename Files:",
+        optRenameNone: "Do Not Rename (Keep Original Name)",
+        optRenameAffix: "Add Affix (Prefix / Suffix)",
+        optRenameCustom: "Batch Rename with Serial Numbers",
+        renamePrefixPh: "Prefix (e.g. converted_)",
+        renameSuffixPh: "Suffix (e.g. _mp4)",
+        renameCustomNamePh: "File name (e.g. video)",
+        lblAudioAdjust: "Audio Adjustments:",
+        lblNormalize: "Normalize Volume (loudnorm)",
+        targetPrefixPending: "[Target]",
+        targetPrefixSaved: "[Saved]",
+        targetPrefixWaiting: "[Waiting]",
+        optTargetDefault: "-- Select a file to edit --",
+        btnFiles: "Select Files",
+        btnFolders: "Select Folder",
+        txtDrop: "Or drag & drop files here",
+        startConversion: "Start Conversion",
+        txtProgressTitle: "Conversion Status",
+        downloadAll: "Download All as ZIP",
+        linkTerms: "Terms of Service",
+        linkPrivacy: "Privacy Policy",
+        firstTermsTitle: "Terms of Service & Privacy Policy",
+        firstTermsNotice: "Please review and accept our Terms of Service and Privacy Policy before using this tool.",
+        firstTermsWarning: "⚠️ Note: All conversions run 100% inside your browser via WASM. You are responsible for complying with copyright laws.",
+        chkAgreeLabel: "I agree to the Terms of Service and Privacy Policy",
+        btnAgreeStart: "Agree & Get Started",
+        featTitle: "Tool Features",
+        feat1H: "Fully Local & Truly Unlimited",
+        feat1P: "Secure architecture with zero server uploads. Convert freely without file size or count limitations.",
+        feat2H: "Mixed Format Batch Processing",
+        feat2P: "Batch-convert folders containing mixed extensions like MP4, MOV, and AVI into a single unified format.",
+        feat3H: "Offline & PWA Ready",
+        feat3P: "Installable via browser as a standalone app. Functions completely offline without internet.",
+        feat4H: "Automatic Recovery from Interruptions",
+        feat4P: "Saves processed files so you can recover and resume seamlessly after crashes or reloads.",
+        feat5H: "Ultra-Fast WebM to MP4 Conversion",
+        feat5P: "Engineered with libx264 ultrafast preset, zerolatency tuning, and yuv420p standard pixel format for instant high-compatibility MP4s.",
+        feat6H: "Real-time Progress, Waveform & Metadata",
+        feat6P: "Live progress tracking (0%-100%), visual audio waveform trimming, 3-band equalizer, and direct ID3 metadata tagging.",
+        envTitle: "Supported Formats & System Requirements",
+        envInput: "Input: MP4, MOV, AVI, MKV, WMV, FLV, WEBM, MP3, WAV, M4A, AAC, OGG, FLAC & more",
+        envOutput: "Output: MP3, WAV, M4A, AAC, OGG, MP4, WebM, GIF",
+        envRec: "Recommended Browsers: Google Chrome, Microsoft Edge, Apple Safari, Mozilla Firefox (Latest)",
+        howtoTitle: "How to Use",
+        howto1: "Load and select media files.",
+        howto2: "Choose output format and configure options.",
+        howto3: "After conversion, save individually or download all as a ZIP package.",
+        faqSectionTitle: "Q&A (Frequently Asked Questions)",
+        faq1Q: "Q1: Are files truly never sent to a server?",
+        faq1A: "Yes. Processing runs 100% inside your browser via client-side WebAssembly. No files ever leave your device.",
+        faq2Q: "Q2: Are there limits on file sizes or counts?",
+        faq2A: "There are no server limits; processing is limited only by your device's available RAM memory.",
+        faq3Q: "Q3: Can I use this app completely offline?",
+        faq3A: "Yes. Click 'Get Offline Pack' to download the local package for complete offline capability.",
+        faq4Q: "Q4: Why is WebM to MP4 conversion so fast?",
+        faq4A: "It utilizes libx264 ultrafast presets, zerolatency tuning, and standard yuv420p formatting, bypassing heavy frame analysis for maximum WASM performance.",
+        tutorialTitle: "Getting Started Guide",
+        tutorialBody: `<ol style="padding-left:18px; line-height:1.7;">
+          <li><strong>Add Files:</strong> Click "Select Files" or drag and drop media into the drop zone.</li>
+          <li><strong>Choose Format:</strong> Select MP4, WebM, MP3, etc. WebM to MP4 conversion is optimized with ultrafast presets and yuv420p.</li>
+          <li><strong>Start Conversion:</strong> Click "Start Conversion" to track real-time progress bars with percentage.</li>
+          <li><strong>Save / Download:</strong> Preview playback, save individually, or download all as a ZIP package.</li>
+        </ol>`,
+        termsTitle: "Terms of Service",
+        termsBody: `<div style="line-height:1.6; font-size:0.8rem;">
+          <p><strong>Article 1 (Application)</strong><br>These terms govern your use of Universal Media Converter Pro.</p>
+          <p style="margin-top:6px;"><strong>Article 2 (Copyright Compliance)</strong><br>Users must ensure they possess the necessary rights or authorization for all processed media files.</p>
+          <p style="margin-top:6px;"><strong>Article 3 (Prohibited Actions)</strong><br>Any illegal distribution, copyright infringement, or malicious tampering is strictly prohibited.</p>
+          <p style="margin-top:6px;"><strong>Article 4 (Disclaimer of Warranty)</strong><br>This software is provided "as is" without warranty. Developers assume no liability for data loss or damage.</p>
+          <p style="margin-top:6px;"><strong>Article 5 (AI-Generated Code Disclaimer)</strong><br>Parts of this codebase were assisted by AI models; full fitness for particular purposes is not warranted.</p>
+          <p style="margin-top:6px;"><strong>Article 6 & 7 (Jurisdiction)</strong><br>Governed by applicable laws with right to modify or cease operations.</p>
+        </div>`,
+        privacyTitle: "Privacy Policy",
+        privacyBody: `<div style="line-height:1.6; font-size:0.8rem;">
+          <p><strong>1. Pure Client-Side Execution</strong><br>All media conversions are executed locally in your browser memory via WebAssembly. No media files are ever transmitted to any remote server.</p>
+          <p style="margin-top:6px;"><strong>2. Local Storage Only</strong><br>Preferences and processed file buffers are cached strictly in your browser's IndexedDB / LocalStorage.</p>
+          <p style="margin-top:6px;"><strong>3. Zero Tracking</strong><br>We do not collect personal information, telemetry, or tracking cookies.</p>
+        </div>`
+      }
+    };
+
+    let currentLang = 'ja';
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem('user_lang', lang);
+      const t = i18n[lang];
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (t[key]) el.textContent = t[key];
+      });
+      document.querySelectorAll('[data-i18n-label]').forEach(el => {
+        const key = el.getAttribute('data-i18n-label');
+        if (t[key]) el.label = t[key];
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (t[key]) el.placeholder = t[key];
+      });
+      document.title = t.pageTitle;
+      updateHeaderDatetime();
+      if (typeof refreshConvertTargetSelect === 'function') refreshConvertTargetSelect();
+      if (typeof refreshAudioTargetSelect === 'function') refreshAudioTargetSelect();
+      if (typeof refreshMetaTargetSelect === 'function') refreshMetaTargetSelect();
+    }
+
+    function setTheme(theme) {
+      localStorage.setItem('user_theme', theme);
+      if (theme === 'auto') {
+        document.documentElement.removeAttribute('data-theme');
+      } else {
+        document.documentElement.setAttribute('data-theme', theme);
+      }
+    }
+
+    function updateHeaderDatetime() {
+      const now = new Date();
+      const options = { year: 'numeric', month: 'numeric', day: 'numeric', weekday: 'short', hour: '2-digit', minute: '2-digit' };
+      const dtEl = document.getElementById('headerDatetime');
+      if (dtEl) dtEl.textContent = now.toLocaleDateString(currentLang === 'ja' ? 'ja-JP' : 'en-US', options);
+    }
+    setInterval(updateHeaderDatetime, 30000);
+
+    const langSelect = document.getElementById('langSelect');
+    const themeSelect = document.getElementById('themeSelect');
+    if (langSelect) langSelect.addEventListener('change', (e) => setLanguage(e.target.value));
+    if (themeSelect) themeSelect.addEventListener('change', (e) => setTheme(e.target.value));
+
+    // タブ切り替え
+    const tabConvertBtn = document.getElementById('tabConvertBtn');
+    const tabAudioEditBtn = document.getElementById('tabAudioEditBtn');
+    const tabMetaBtn = document.getElementById('tabMetaBtn');
+    const tabConvertContent = document.getElementById('tabConvertContent');
+    const tabAudioEditContent = document.getElementById('tabAudioEditContent');
+    const tabMetaContent = document.getElementById('tabMetaContent');
+
+    function switchTab(target) {
+      [tabConvertBtn, tabAudioEditBtn, tabMetaBtn].forEach(b => b.classList.remove('active'));
+      [tabConvertContent, tabAudioEditContent, tabMetaContent].forEach(c => c.classList.remove('active'));
+
+      if (target === 'audio') {
+        tabAudioEditBtn.classList.add('active');
+        tabAudioEditContent.classList.add('active');
+        refreshAudioTargetSelect();
+      } else if (target === 'meta') {
+        tabMetaBtn.classList.add('active');
+        tabMetaContent.classList.add('active');
+        refreshMetaTargetSelect();
+      } else {
+        tabConvertBtn.classList.add('active');
+        tabConvertContent.classList.add('active');
+        refreshConvertTargetSelect();
+      }
+    }
+
+    tabConvertBtn.addEventListener('click', () => switchTab('convert'));
+    tabAudioEditBtn.addEventListener('click', () => switchTab('audio'));
+    tabMetaBtn.addEventListener('click', () => switchTab('meta'));
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      toast.textContent = msg || '完了しました';
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    const customModal = document.getElementById('customModal');
+    const customModalTitle = document.getElementById('customModalTitle');
+    const customModalBody = document.getElementById('customModalBody');
+    const customModalClose = document.getElementById('customModalClose');
+    const customModalOkBtn = document.getElementById('customModalOkBtn');
+
+    function showCustomAlert(title, content) {
+      return new Promise((resolve) => {
+        customModalTitle.textContent = title;
+        customModalBody.innerHTML = content;
+        customModal.style.display = 'flex';
+        const handleClose = () => {
+          customModal.style.display = 'none';
+          customModalOkBtn.removeEventListener('click', handleClose);
+          customModalClose.removeEventListener('click', handleClose);
+          resolve();
+        };
+        customModalOkBtn.addEventListener('click', handleClose);
+        customModalClose.addEventListener('click', handleClose);
+      });
+    }
+
+    function checkFirstLaunchFlow() {
+      return new Promise((resolve) => {
+        const agreed = localStorage.getItem('app_agreed');
+        if (agreed === 'true') {
+          return resolve();
+        }
+
+        const firstModal = document.getElementById('firstLaunchModal');
+        const termsBox = document.getElementById('modalTermsContent');
+        const privacyBox = document.getElementById('modalPrivacyContent');
+        const chkAgree = document.getElementById('chkAgreeTerms');
+        const btnStart = document.getElementById('btnAgreeStart');
+
+        const t = i18n[currentLang];
+        termsBox.innerHTML = `<h5>${t.termsTitle}</h5>${t.termsBody}`;
+        privacyBox.innerHTML = `<h5>${t.privacyTitle}</h5>${t.privacyBody}`;
+
+        firstModal.style.display = 'flex';
+
+        chkAgree.addEventListener('change', () => {
+          btnStart.disabled = !chkAgree.checked;
+        });
+
+        btnStart.addEventListener('click', async () => {
+          if (!chkAgree.checked) return;
+          localStorage.setItem('app_agreed', 'true');
+          firstModal.style.display = 'none';
+          await showCustomAlert(t.tutorialTitle, t.tutorialBody);
+          resolve();
+        });
+      });
+    }
+
+    document.getElementById('btnTutorial')?.addEventListener('click', () => {
+      const t = i18n[currentLang];
+      showCustomAlert(t.tutorialTitle, t.tutorialBody);
+    });
+
+    document.getElementById('linkTermsTrigger')?.addEventListener('click', () => {
+      const t = i18n[currentLang];
+      showCustomAlert(t.termsTitle, t.termsBody);
+    });
+
+    document.getElementById('linkPrivacyTrigger')?.addEventListener('click', () => {
+      const t = i18n[currentLang];
+      showCustomAlert(t.privacyTitle, t.privacyBody);
+    });
+
+    document.getElementById('btnShareApp')?.addEventListener('click', async () => {
+      if (navigator.share) {
+        try { await navigator.share({ title: document.title, url: window.location.href }); } catch (e) {}
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        showToast("URLをクリップボードにコピーしました");
+      }
+    });
+
+    // オフラインパック（自己保存用）
+    document.getElementById('btnDownloadAppPack')?.addEventListener('click', () => {
+      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'Universal_Media_Converter_Pro_Offline.html';
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast("オフラインHTMLをダウンロードしました");
+    });
+
+    // リネームUI表示切り替え
+    const renameModeSelect = document.getElementById('renameMode');
+    const renameAffixBox = document.getElementById('renameAffixBox');
+    const renameCustomBox = document.getElementById('renameCustomBox');
+    renameModeSelect.addEventListener('change', (e) => {
+      renameAffixBox.style.display = e.target.value === 'affix' ? 'flex' : 'none';
+      renameCustomBox.style.display = e.target.value === 'custom' ? 'flex' : 'none';
+    });
+
+    // IndexedDB
+    const DB_NAME = 'MediaConverterPro_v9';
+    let db = null;
+    let pendingFiles = [];
+    const activeBlobUrls = new Map();
+
+    function initDB() {
+      return new Promise((resolve) => {
+        const req = indexedDB.open(DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const dbObj = e.target.result;
+          if (!dbObj.objectStoreNames.contains('files')) {
+            dbObj.createObjectStore('files', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function saveConvertedFile(id, originalName, fileName, data, inputExt, metadata = {}) {
+      if (!db) return;
+      return new Promise((resolve) => {
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').put({ id, originalName, fileName, data, inputExt, metadata });
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    async function getSavedFiles() {
+      if (!db) return [];
+      return new Promise((resolve) => {
+        const tx = db.transaction('files', 'readonly');
+        const req = tx.objectStore('files').getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => resolve([]);
+      });
+    }
+
+    async function deleteConvertedFileDB(id) {
+      if (!db) return;
+      return new Promise((resolve) => {
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').delete(id);
+        tx.oncomplete = () => resolve();
+      });
+    }
+
+    // FFmpeg.wasm エンジン & リアルタイム進捗管理
+    let ffmpegInstance = null;
+    let isFFmpegLoading = false;
+    let activeProgressCallback = null;
+
+    async function initFFmpeg() {
+      if (ffmpegInstance && ffmpegInstance.isLoaded()) {
+        return ffmpegInstance;
+      }
+      if (isFFmpegLoading) {
+        while (isFFmpegLoading) {
+          await new Promise(r => setTimeout(r, 100));
+        }
+        return ffmpegInstance;
+      }
+
+      isFFmpegLoading = true;
+      try {
+        if (typeof FFmpeg === 'undefined' || !FFmpeg.createFFmpeg) {
+          throw new Error("FFmpegライブラリのロードに失敗しました。インターネット接続を確認してください。");
+        }
+
+        const { createFFmpeg } = FFmpeg;
+        ffmpegInstance = createFFmpeg({
+          corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+          log: true
+        });
+
+        ffmpegInstance.setProgress(({ ratio }) => {
+          if (typeof activeProgressCallback === 'function') {
+            activeProgressCallback(Math.min(Math.max(ratio, 0), 1));
+          }
+        });
+
+        await ffmpegInstance.load();
+        return ffmpegInstance;
+      } finally {
+        isFFmpegLoading = false;
+      }
+    }
+
+    async function runWorkerTask(fileData, fileName, outputName, ffmpegArgs, onProgress) {
+      const ffmpeg = await initFFmpeg();
+      activeProgressCallback = onProgress;
+      try {
+        ffmpeg.FS('writeFile', fileName, new Uint8Array(fileData));
+        await ffmpeg.run(...ffmpegArgs);
+        const data = ffmpeg.FS('readFile', outputName);
+        
+        try { ffmpeg.FS('unlink', fileName); } catch(e) {}
+        try { ffmpeg.FS('unlink', outputName); } catch(e) {}
+
+        return {
+          data: data.buffer,
+          outputName
+        };
+      } catch (err) {
+        try { ffmpeg.FS('unlink', fileName); } catch(e) {}
+        try { ffmpeg.FS('unlink', outputName); } catch(e) {}
+        throw err;
+      } finally {
+        activeProgressCallback = null;
+      }
+    }
+
+    // UI要素
+    const fileInput = document.getElementById('fileInput');
+    const folderInput = document.getElementById('folderInput');
+    const dropInput = document.getElementById('dropInput');
+    const dropZone = document.getElementById('dropZone');
+    const convertTargetSelect = document.getElementById('convertTargetSelect');
+    const outputFormat = document.getElementById('outputFormat');
+    const progressBar = document.getElementById('progressBar');
+    const progressStatusText = document.getElementById('progressStatusText');
+    const progressPercentText = document.getElementById('progressPercentText');
+    const counterLabel = document.getElementById('counterLabel');
+    const fileListEl = document.getElementById('fileList');
+    const downloadAllBtn = document.getElementById('downloadAllBtn');
+    const startConversionBtn = document.getElementById('startConversionBtn');
+    const clearListBtn = document.getElementById('clearListBtn');
+    const clearCacheBtn = document.getElementById('clearCacheBtn');
+
+    function updateProgress(percent, statusMsg) {
+      const p = Math.round(Math.min(Math.max(percent, 0), 100));
+      progressBar.style.width = p + '%';
+      progressPercentText.textContent = p + '%';
+      if (statusMsg) progressStatusText.textContent = statusMsg;
+    }
+
+    function createFileItemUI(id, displayTitle, detectedExt, isConverted = false, dataBuffer = null) {
+      let item = document.getElementById(id);
+      if (!item) {
+        item = document.createElement('div');
+        item.id = id;
+        item.className = 'file-item';
+        item.innerHTML = `
+          <div class="file-header">
+            <div class="file-info">
+              <div class="file-name" title="${displayTitle}">${displayTitle}</div>
+              <div class="file-meta">形式: .${detectedExt} | <span class="file-status">${isConverted ? '完了' : '待機中'}</span></div>
+            </div>
+            <div class="file-actions">
+              <button class="btn-sm btn-preview" style="${isConverted ? '' : 'display:none;'}">プレビュー</button>
+              <button class="btn-sm btn-audio-fx">音声加工</button>
+              <button class="btn-sm btn-edit-meta">タグ編集</button>
+              <button class="btn-sm btn-success btn-dl" ${isConverted ? '' : 'disabled'}>保存</button>
+              <button class="btn-sm btn-danger btn-remove">削除</button>
+            </div>
+          </div>
+          <div class="preview-container"></div>
+        `;
+        fileListEl.appendChild(item);
+
+        const previewContainer = item.querySelector('.preview-container');
+        const previewBtn = item.querySelector('.btn-preview');
+        const dlBtn = item.querySelector('.btn-dl');
+
+        // プレビュー再生ハンドラー
+        previewBtn.addEventListener('click', async () => {
+          if (previewContainer.style.display === 'block') {
+            previewContainer.style.display = 'none';
+            previewContainer.innerHTML = '';
+            previewBtn.textContent = 'プレビュー';
+            return;
+          }
+
+          let buf = dataBuffer;
+          if (!buf) {
+            const saved = await getSavedFiles();
+            const f = saved.find(s => s.id === id);
+            if (f) buf = f.data;
+          }
+          if (!buf) return;
+
+          const isVideo = ['mp4', 'webm', 'mov'].includes(detectedExt.toLowerCase());
+          const isAudio = ['mp3', 'wav', 'm4a', 'aac', 'ogg'].includes(detectedExt.toLowerCase());
+
+          const mimeMap = { mp4: 'video/mp4', webm: 'video/webm', mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg', m4a: 'audio/mp4' };
+          const mime = mimeMap[detectedExt.toLowerCase()] || (isVideo ? 'video/mp4' : 'audio/mpeg');
+          const blob = new Blob([buf], { type: mime });
+          const url = URL.createObjectURL(blob);
+
+          previewContainer.innerHTML = '';
+          if (isVideo) {
+            const vid = document.createElement('video');
+            vid.controls = true;
+            vid.src = url;
+            previewContainer.appendChild(vid);
+          } else if (isAudio) {
+            const aud = document.createElement('audio');
+            aud.controls = true;
+            aud.src = url;
+            previewContainer.appendChild(aud);
+          }
+          previewContainer.style.display = 'block';
+          previewBtn.textContent = '閉じる';
+        });
+
+        // 保存ダウンロード
+        dlBtn.addEventListener('click', async () => {
+          let buf = dataBuffer;
+          if (!buf) {
+            const saved = await getSavedFiles();
+            const f = saved.find(s => s.id === id);
+            if (f) buf = f.data;
+          }
+          if (!buf) return;
+          const blob = new Blob([buf]);
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = displayTitle;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+        item.querySelector('.btn-audio-fx').addEventListener('click', () => {
+          switchTab('audio');
+          audioTargetSelect.value = id;
+          audioTargetSelect.dispatchEvent(new Event('change'));
+        });
+
+        item.querySelector('.btn-edit-meta').addEventListener('click', () => {
+          switchTab('meta');
+          metaTargetSelect.value = id;
+          metaTargetSelect.dispatchEvent(new Event('change'));
+        });
+
+        item.querySelector('.btn-remove').addEventListener('click', async () => {
+          const rawKey = id.replace('conv_', '').replace('pending_', '');
+          pendingFiles = pendingFiles.filter(f => `${f.name}_${f.size}` !== rawKey);
+          await deleteConvertedFileDB(id);
+          await deleteConvertedFileDB(`conv_${rawKey}`);
+          item.remove();
+          refreshConvertTargetSelect();
+          refreshMetaTargetSelect();
+          refreshAudioTargetSelect();
+
+          const remaining = await getSavedFiles();
+          if (remaining.length === 0 && pendingFiles.length === 0) {
+            downloadAllBtn.disabled = true;
+            startConversionBtn.disabled = true;
+            updateProgress(0, '待機中');
+            counterLabel.textContent = '0 / 0';
+          }
+        });
+      }
+      return item;
+    }
+
+    function refreshConvertTargetSelect() {
+      const savedVal = convertTargetSelect.value;
+      const t = i18n[currentLang];
+      convertTargetSelect.innerHTML = `<option value="all">${t.optConvertAll}</option>`;
+      pendingFiles.forEach(f => {
+        const uniqueKey = `${f.name}_${f.size}`;
+        const opt = document.createElement('option');
+        opt.value = `pending_${uniqueKey}`;
+        opt.textContent = `${t.targetPrefixPending || '[対象]'} ${f.name}`;
+        convertTargetSelect.appendChild(opt);
+      });
+      if (savedVal && convertTargetSelect.querySelector(`option[value="${savedVal}"]`)) {
+        convertTargetSelect.value = savedVal;
+      }
+    }
+
+    function handleFileSelection(files) {
+      if (!files || files.length === 0) return;
+      Array.from(files).forEach(file => {
+        const uniqueKey = `${file.name}_${file.size}`;
+        if (!pendingFiles.some(f => `${f.name}_${f.size}` === uniqueKey)) {
+          pendingFiles.push(file);
+          const ext = file.name.split('.').pop().toLowerCase();
+          createFileItemUI(`pending_${uniqueKey}`, file.name, ext, false);
+        }
+      });
+      refreshConvertTargetSelect();
+      refreshMetaTargetSelect();
+      refreshAudioTargetSelect();
+      if (pendingFiles.length > 0) startConversionBtn.disabled = false;
+    }
+
+    [fileInput, folderInput, dropInput].forEach(inp => {
+      inp.addEventListener('change', (e) => {
+        handleFileSelection(e.target.files);
+        inp.value = '';
+      });
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files) handleFileSelection(e.dataTransfer.files);
+    });
+
+    // 変換実行処理（高速WebM/MP4最適化 ＆ リアルタイム進捗対応）
+    startConversionBtn.addEventListener('click', async () => {
+      const btnText = document.getElementById('btnText');
+      startConversionBtn.disabled = true;
+      btnText.innerHTML = `<span class="spinner"></span> 変換処理中...`;
+
+      try {
+        if (!ffmpegInstance || !ffmpegInstance.isLoaded()) {
+          updateProgress(5, "FFmpegコアをロード中...");
+          await initFFmpeg();
+        }
+
+        const targetVal = convertTargetSelect.value;
+        let targets = [];
+        if (targetVal === 'all') {
+          targets = [...pendingFiles];
+        } else {
+          const rawKey = targetVal.replace('pending_', '');
+          const found = pendingFiles.find(f => `${f.name}_${f.size}` === rawKey);
+          if (found) targets = [found];
+        }
+
+        if (targets.length === 0) {
+          showToast("変換対象のファイルがありません");
+          return;
+        }
+
+        const total = targets.length;
+        let currentIdx = 0;
+        const outFormat = outputFormat.value.toLowerCase();
+
+        for (const file of targets) {
+          currentIdx++;
+          counterLabel.textContent = `${currentIdx} / ${total}`;
+          updateProgress(((currentIdx - 1) / total) * 100, `変換準備中: ${file.name}`);
+
+          const inExt = file.name.split('.').pop().toLowerCase();
+          const inputName = `in_${Date.now()}.${inExt}`;
+          const outputName = `out_${Date.now()}.${outFormat}`;
+          const fileBuffer = await file.arrayBuffer();
+
+          // 高速化・高品質FFmpegコマンド引数の構築
+          let args = [];
+
+          // 高速シーク (-ss を -i の前に指定することで先頭デコードのスキップによる大幅な高速化)
+          const trimStart = document.getElementById('trimStart')?.value.trim();
+          const trimEnd = document.getElementById('trimEnd')?.value.trim();
+          if (trimStart) {
+            args.push('-ss', trimStart);
+          }
+          args.push('-i', inputName);
+          if (trimEnd) {
+            args.push('-to', trimEnd);
+          }
+
+          const quality = document.getElementById('qualityPreset')?.value || 'default';
+
+          // 動画形式への変換時の最適化（WebM -> MP4など）
+          if (outFormat === 'mp4') {
+            let crf = '28';
+            let aBitrate = '128k';
+            if (quality === 'high') { crf = '24'; aBitrate = '192k'; }
+            else if (quality === 'low') { crf = '32'; aBitrate = '96k'; }
+
+            // libx264 + ultrafast + zerolatency + yuv420p が超高速・高互換変換の決定版
+            args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-crf', crf, '-pix_fmt', 'yuv420p', '-threads', '1');
+            args.push('-c:a', 'aac', '-b:a', aBitrate);
+          } else if (outFormat === 'webm') {
+            args.push('-c:v', 'libvpx', '-crf', '32', '-b:v', '0', '-deadline', 'realtime', '-speed', '8', '-cpu-used', '8', '-threads', '1');
+            args.push('-c:a', 'libvorbis', '-b:a', '128k');
+          } else if (outFormat === 'gif') {
+            args.push('-vf', 'fps=10,scale=360:-1:flags=fast_bilinear');
+          } else if (outFormat === 'mp3') {
+            let aBitrate = '160k';
+            if (quality === 'high') aBitrate = '256k';
+            else if (quality === 'low') aBitrate = '96k';
+            args.push('-c:a', 'libmp3lame', '-b:a', aBitrate);
+          } else if (outFormat === 'wav') {
+            args.push('-c:a', 'pcm_s16le');
+          } else if (outFormat === 'm4a' || outFormat === 'aac') {
+            let aBitrate = '128k';
+            if (quality === 'high') aBitrate = '192k';
+            else if (quality === 'low') aBitrate = '96k';
+            args.push('-c:a', 'aac', '-b:a', aBitrate);
+          } else if (outFormat === 'ogg') {
+            args.push('-c:a', 'libvorbis', '-b:a', '128k');
+          }
+
+          // 音声加工（Tab 1）
+          const convPitch = parseFloat(document.getElementById('convPitch')?.value || '0');
+          const convSpeed = parseFloat(document.getElementById('convSpeed')?.value || '1.0');
+          const convVol = parseFloat(document.getElementById('convVol')?.value || '100');
+          const convChkDistant = document.getElementById('convChkDistant')?.checked;
+
+          let afFilters = [];
+          if (convPitch !== 0 || convSpeed !== 1.0) {
+            const pitchRatio = Math.pow(2, convPitch / 12);
+            afFilters.push(`asetrate=44100*${pitchRatio.toFixed(4)},aresample=44100,atempo=${(convSpeed / pitchRatio).toFixed(4)}`);
+          }
+          if (convVol !== 100) {
+            afFilters.push(`volume=${(convVol / 100).toFixed(2)}`);
+          }
+          if (convChkDistant) {
+            afFilters.push(`lowpass=f=800`);
+          }
+          if (document.getElementById('chkNormalize')?.checked) {
+            afFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
+          }
+          if (afFilters.length > 0) {
+            args.push('-af', afFilters.join(','));
+          }
+
+          // メタデータ付与
+          const metaTitle = document.getElementById('metaTitle')?.value.trim();
+          const metaArtist = document.getElementById('metaArtist')?.value.trim();
+          if (metaTitle) args.push('-metadata', `title=${metaTitle}`);
+          if (metaArtist) args.push('-metadata', `artist=${metaArtist}`);
+
+          args.push(outputName);
+
+          // 個別ファイル内エンコード進捗のコールバック
+          const result = await runWorkerTask(fileBuffer, inputName, outputName, args, (ratio) => {
+            const fileProgress = ratio * 100;
+            const overallProgress = ((currentIdx - 1 + ratio) / total) * 100;
+            updateProgress(overallProgress, `変換中 (${currentIdx}/${total}): ${Math.round(fileProgress)}%`);
+          });
+
+          // リネーム設定適用
+          const baseName = file.name.substring(0, file.name.lastIndexOf('.'));
+          let outFileName = `${baseName}.${outFormat}`;
+          const renameMode = renameModeSelect.value;
+          if (renameMode === 'affix') {
+            const prefix = document.getElementById('renamePrefix').value || '';
+            const suffix = document.getElementById('renameSuffix').value || '';
+            outFileName = `${prefix}${baseName}${suffix}.${outFormat}`;
+          } else if (renameMode === 'custom') {
+            const cName = document.getElementById('renameCustomName').value || 'file';
+            outFileName = `${cName}_${String(currentIdx).padStart(2, '0')}.${outFormat}`;
+          }
+
+          const uniqueKey = `${file.name}_${file.size}`;
+          const targetId = `conv_${uniqueKey}`;
+
+          await saveConvertedFile(targetId, file.name, outFileName, result.data, outFormat);
+          createFileItemUI(targetId, outFileName, outFormat, true, result.data);
+        }
+
+        updateProgress(100, "全ての変換が正常に完了しました！");
+        downloadAllBtn.disabled = false;
+        showToast("変換が完了しました！");
+      } catch (err) {
+        showCustomAlert("変換エラー", `
+          <p style="color:var(--danger-color); font-weight:600;">処理中にエラーが発生しました。</p>
+          <p style="margin-top:6px; font-size:0.85rem;">詳細: ${err.message}</p>
+        `);
+      } finally {
+        startConversionBtn.disabled = false;
+        btnText.textContent = "変換処理を開始する";
+      }
+    });
+
+    // 一括ZIPダウンロード
+    downloadAllBtn.addEventListener('click', async () => {
+      const saved = await getSavedFiles();
+      if (saved.length === 0) return;
+      downloadAllBtn.disabled = true;
+      downloadAllBtn.textContent = "ZIPアーカイブを作成中...";
+
+      try {
+        const zip = new JSZip();
+        saved.forEach(item => {
+          zip.file(item.fileName, item.data);
+        });
+        const content = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(content);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `converted_media_${Date.now()}.zip`;
+        a.click();
+        URL.revokeObjectURL(url);
+        showToast("ZIPダウンロードを開始しました");
+      } catch (e) {
+        showCustomAlert("エラー", "ZIP作成に失敗しました: " + e.message);
+      } finally {
+        downloadAllBtn.disabled = false;
+        downloadAllBtn.textContent = "変換済みファイルを一括ZIPダウンロード";
+      }
+    });
+
+    // リストクリア
+    clearListBtn.addEventListener('click', () => {
+      pendingFiles = [];
+      fileListEl.innerHTML = '';
+      refreshConvertTargetSelect();
+      refreshMetaTargetSelect();
+      refreshAudioTargetSelect();
+      downloadAllBtn.disabled = true;
+      startConversionBtn.disabled = true;
+      updateProgress(0, '待機中');
+      counterLabel.textContent = '0 / 0';
+      showToast("リストをクリアしました");
+    });
+
+    clearCacheBtn.addEventListener('click', async () => {
+      if (db) {
+        const tx = db.transaction('files', 'readwrite');
+        tx.objectStore('files').clear();
+      }
+      clearListBtn.click();
+      showToast("キャッシュを消去しました");
+    });
+
+    // オーディオ波形・加工機能
+    let audioCtx = null;
+    let currentAudioBuffer = null;
+    let trimRange = { start: 0, end: 0 };
+    let isDraggingWaveform = false;
+    let dragStartX = 0;
+    const waveformCanvas = document.getElementById('waveformCanvas');
+    const waveformContainer = document.getElementById('waveformContainer');
+    const audioTargetSelect = document.getElementById('audioTargetSelect');
+
+    function renderWaveform() {
+      if (!waveformCanvas || !currentAudioBuffer) return;
+      const ctx = waveformCanvas.getContext('2d');
+      const width = waveformCanvas.width = waveformContainer.clientWidth;
+      const height = waveformCanvas.height = waveformContainer.clientHeight;
+      ctx.clearRect(0, 0, width, height);
+
+      const data = currentAudioBuffer.getChannelData(0);
+      const step = Math.ceil(data.length / width);
+      const amp = height / 2;
+
+      ctx.fillStyle = '#64748b';
+      for (let i = 0; i < width; i++) {
+        let min = 1.0, max = -1.0;
+        for (let j = 0; j < step; j++) {
+          const datum = data[(i * step) + j];
+          if (datum < min) min = datum;
+          if (datum > max) max = datum;
+        }
+        ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+      }
+
+      if (trimRange.end > trimRange.start) {
+        const startX = (trimRange.start / currentAudioBuffer.duration) * width;
+        const endX = (trimRange.end / currentAudioBuffer.duration) * width;
+        ctx.fillStyle = 'rgba(37, 99, 235, 0.3)';
+        ctx.fillRect(startX, 0, endX - startX, height);
+        ctx.strokeStyle = '#2563eb';
+        ctx.strokeRect(startX, 0, endX - startX, height);
+      }
+    }
+
+    waveformContainer.addEventListener('mousedown', (e) => {
+      if (!currentAudioBuffer) return;
+      const rect = waveformContainer.getBoundingClientRect();
+      dragStartX = e.clientX - rect.left;
+      isDraggingWaveform = true;
+      const t = (dragStartX / rect.width) * currentAudioBuffer.duration;
+      trimRange.start = t;
+      trimRange.end = t;
+      renderWaveform();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDraggingWaveform || !currentAudioBuffer) return;
+      const rect = waveformContainer.getBoundingClientRect();
+      const currentX = Math.max(0, Math.min(e.clientX - rect.left, rect.width));
+      const t1 = (dragStartX / rect.width) * currentAudioBuffer.duration;
+      const t2 = (currentX / rect.width) * currentAudioBuffer.duration;
+      trimRange.start = Math.min(t1, t2);
+      trimRange.end = Math.max(t1, t2);
+      document.getElementById('fxTrimStart').value = trimRange.start.toFixed(2);
+      document.getElementById('fxTrimEnd').value = trimRange.end.toFixed(2);
+      renderWaveform();
+    });
+
+    window.addEventListener('mouseup', () => { isDraggingWaveform = false; });
+    document.getElementById('btnResetTrim').addEventListener('click', () => {
+      trimRange = { start: 0, end: 0 };
+      document.getElementById('fxTrimStart').value = '';
+      document.getElementById('fxTrimEnd').value = '';
+      renderWaveform();
+    });
+
+    async function refreshAudioTargetSelect() {
+      const savedVal = audioTargetSelect.value;
+      const t = i18n[currentLang];
+      audioTargetSelect.innerHTML = `<option value="">${t.optTargetDefault}</option>`;
+      const savedFiles = await getSavedFiles();
+      savedFiles.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${t.targetPrefixSaved || '[保存済み]'} ${s.fileName}`;
+        audioTargetSelect.appendChild(opt);
+      });
+      pendingFiles.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = `pending_${f.name}_${f.size}`;
+        opt.textContent = `${t.targetPrefixWaiting || '[待機中]'} ${f.name}`;
+        audioTargetSelect.appendChild(opt);
+      });
+      if (savedVal) audioTargetSelect.value = savedVal;
+    }
+
+    audioTargetSelect.addEventListener('change', async () => {
+      const id = audioTargetSelect.value;
+      if (!id) {
+        currentAudioBuffer = null;
+        renderWaveform();
+        return;
+      }
+      let arrayBuffer = null;
+      if (id.startsWith('conv_')) {
+        const saved = await getSavedFiles();
+        const t = saved.find(s => s.id === id);
+        if (t) arrayBuffer = t.data.slice(0);
+      } else if (id.startsWith('pending_')) {
+        const rawKey = id.replace('pending_', '');
+        const f = pendingFiles.find(item => `${item.name}_${item.size}` === rawKey);
+        if (f) arrayBuffer = await f.arrayBuffer();
+      }
+      if (arrayBuffer) {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        try {
+          currentAudioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          renderWaveform();
+        } catch (e) {
+          console.warn("音声デコード非対応形式:", e);
+        }
+      }
+    });
+
+    // EQスライダー連携
+    ['fxPitch', 'fxVol', 'fxSpeed'].forEach(id => {
+      const el = document.getElementById(id);
+      const valEl = document.getElementById(id + 'Val');
+      el.addEventListener('input', () => {
+        if (id === 'fxPitch') valEl.textContent = `${el.value} 半音`;
+        else if (id === 'fxVol') valEl.textContent = `${el.value}%`;
+        else if (id === 'fxSpeed') valEl.textContent = `${el.value}x`;
+      });
+    });
+
+    ['60', '230', '910', '4k', '14k'].forEach(band => {
+      const sl = document.getElementById('eqBand' + band);
+      const vl = document.getElementById('eqVal' + band);
+      sl.addEventListener('input', () => { vl.textContent = sl.value + 'dB'; });
+    });
+
+    // メタタグターゲット更新
+    const metaTargetSelect = document.getElementById('metaTargetSelect');
+    async function refreshMetaTargetSelect() {
+      const savedVal = metaTargetSelect.value;
+      const t = i18n[currentLang];
+      metaTargetSelect.innerHTML = `<option value="">${t.optTargetDefault}</option>`;
+      const savedFiles = await getSavedFiles();
+      savedFiles.forEach(s => {
+        const opt = document.createElement('option');
+        opt.value = s.id;
+        opt.textContent = `${t.targetPrefixSaved || '[保存済み]'} ${s.fileName}`;
+        metaTargetSelect.appendChild(opt);
+      });
+      pendingFiles.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = `pending_${f.name}_${f.size}`;
+        opt.textContent = `${t.targetPrefixWaiting || '[待機中]'} ${f.name}`;
+        metaTargetSelect.appendChild(opt);
+      });
+      if (savedVal) metaTargetSelect.value = savedVal;
+    }
+
+    // 音声プレビュー・書き出しハンドラー
+    let fxAudioSource = null;
+    let isPlayingFx = false;
+    const btnPreviewFx = document.getElementById('btnPreviewFx');
+    const btnExportAudio = document.getElementById('btnExportAudio');
+    const saveMetaBtn = document.getElementById('saveMetaBtn');
+
+    if (btnPreviewFx) {
+      btnPreviewFx.addEventListener('click', () => {
+        if (!currentAudioBuffer) {
+          showToast("オーディオデータが選択されていません");
+          return;
+        }
+        if (isPlayingFx) {
+          if (fxAudioSource) {
+            try { fxAudioSource.stop(); } catch(e){}
+            fxAudioSource = null;
+          }
+          isPlayingFx = false;
+          btnPreviewFx.textContent = "試聴再生 / 停止";
+          return;
+        }
+
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        fxAudioSource = audioCtx.createBufferSource();
+        fxAudioSource.buffer = currentAudioBuffer;
+
+        const speed = parseFloat(document.getElementById('fxSpeed').value) || 1.0;
+        const pitch = parseInt(document.getElementById('fxPitch').value) || 0;
+        fxAudioSource.playbackRate.value = speed * Math.pow(2, pitch / 12);
+
+        const gainNode = audioCtx.createGain();
+        gainNode.gain.value = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
+
+        fxAudioSource.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        let offset = trimRange.start || 0;
+        let duration = (trimRange.end > trimRange.start) ? (trimRange.end - trimRange.start) : undefined;
+
+        fxAudioSource.start(0, offset, duration);
+        isPlayingFx = true;
+        btnPreviewFx.textContent = "停止";
+
+        fxAudioSource.onended = () => {
+          isPlayingFx = false;
+          btnPreviewFx.textContent = "試聴再生 / 停止";
+        };
+      });
+    }
+
+    if (btnExportAudio) {
+      btnExportAudio.addEventListener('click', async () => {
+        const id = audioTargetSelect.value;
+        if (!id) {
+          showToast("編集対象のファイルを選択してください");
+          return;
+        }
+        let arrayBuffer = null;
+        let originalFileName = "audio.wav";
+        if (id.startsWith('conv_')) {
+          const saved = await getSavedFiles();
+          const t = saved.find(s => s.id === id);
+          if (t) { arrayBuffer = t.data.slice(0); originalFileName = t.fileName; }
+        } else if (id.startsWith('pending_')) {
+          const rawKey = id.replace('pending_', '');
+          const f = pendingFiles.find(item => `${item.name}_${item.size}` === rawKey);
+          if (f) { arrayBuffer = await f.arrayBuffer(); originalFileName = f.name; }
+        }
+        if (!arrayBuffer) {
+          showToast("ファイルデータを読み込めませんでした");
+          return;
+        }
+
+        btnExportAudio.disabled = true;
+        const btnExportText = document.getElementById('btnExportText');
+        btnExportText.innerHTML = `<span class="spinner"></span> 書き出し中...`;
+
+        try {
+          const inExt = originalFileName.split('.').pop().toLowerCase() || 'wav';
+          const inputName = `audio_in_${Date.now()}.${inExt}`;
+          const outputName = `audio_out_${Date.now()}.mp3`;
+
+          const args = ['-i', inputName];
+          if (trimRange.end > trimRange.start) {
+            args.push('-ss', String(trimRange.start), '-to', String(trimRange.end));
+          }
+
+          const vol = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
+          const speed = parseFloat(document.getElementById('fxSpeed').value) || 1.0;
+          const pitch = parseInt(document.getElementById('fxPitch').value) || 0;
+
+          let afFilters = [];
+          if (vol !== 1.0) afFilters.push(`volume=${vol.toFixed(2)}`);
+          if (speed !== 1.0) afFilters.push(`atempo=${speed.toFixed(2)}`);
+          if (pitch !== 0) {
+            const factor = Math.pow(2, pitch / 12).toFixed(4);
+            afFilters.push(`asetrate=44100*${factor},aresample=44100`);
+          }
+
+          const eq60 = parseInt(document.getElementById('eqBand60').value) || 0;
+          const eq230 = parseInt(document.getElementById('eqBand230').value) || 0;
+          const eq910 = parseInt(document.getElementById('eqBand910').value) || 0;
+          const eq4k = parseInt(document.getElementById('eqBand4k').value) || 0;
+          const eq14k = parseInt(document.getElementById('eqBand14k').value) || 0;
+
+          if (eq60 !== 0) afFilters.push(`equalizer=f=60:width_type=h:width=50:g=${eq60}`);
+          if (eq230 !== 0) afFilters.push(`equalizer=f=230:width_type=h:width=150:g=${eq230}`);
+          if (eq910 !== 0) afFilters.push(`equalizer=f=910:width_type=h:width=500:g=${eq910}`);
+          if (eq4k !== 0) afFilters.push(`equalizer=f=4000:width_type=h:width=2000:g=${eq4k}`);
+          if (eq14k !== 0) afFilters.push(`equalizer=f=14000:width_type=h:width=5000:g=${eq14k}`);
+
+          if (afFilters.length > 0) {
+            args.push('-af', afFilters.join(','));
+          }
+          args.push('-c:a', 'libmp3lame', '-b:a', '192k', outputName);
+
+          updateProgress(20, "音声エフェクト処理中...");
+          const result = await runWorkerTask(arrayBuffer, inputName, outputName, args, (ratio) => {
+            updateProgress(Math.round(ratio * 100), `書き出し中... ${Math.round(ratio * 100)}%`);
+          });
+
+          const outName = `fx_${originalFileName.substring(0, originalFileName.lastIndexOf('.'))}.mp3`;
+          const newId = `conv_fx_${Date.now()}`;
+          await saveConvertedFile(newId, originalFileName, outName, result.data, 'mp3');
+          createFileItemUI(newId, outName, 'mp3', true, result.data);
+          downloadAllBtn.disabled = false;
+          refreshAudioTargetSelect();
+          refreshMetaTargetSelect();
+          updateProgress(100, "書き出し完了");
+          showToast("加工音声を書き出しました");
+        } catch (e) {
+          showCustomAlert("書き出しエラー", "音声処理に失敗しました: " + e.message);
+        } finally {
+          btnExportAudio.disabled = false;
+          btnExportText.textContent = "加工・切り取り音声を書き出し";
+        }
+      });
+    }
+
+    if (saveMetaBtn) {
+      saveMetaBtn.addEventListener('click', async () => {
+        const id = metaTargetSelect.value;
+        if (!id) {
+          showToast("編集対象のファイルを選択してください");
+          return;
+        }
+        let arrayBuffer = null;
+        let originalFileName = "file.mp3";
+        if (id.startsWith('conv_')) {
+          const saved = await getSavedFiles();
+          const t = saved.find(s => s.id === id);
+          if (t) { arrayBuffer = t.data.slice(0); originalFileName = t.fileName; }
+        } else if (id.startsWith('pending_')) {
+          const rawKey = id.replace('pending_', '');
+          const f = pendingFiles.find(item => `${item.name}_${item.size}` === rawKey);
+          if (f) { arrayBuffer = await f.arrayBuffer(); originalFileName = f.name; }
+        }
+        if (!arrayBuffer) {
+          showToast("ファイルデータを読み込めませんでした");
+          return;
+        }
+
+        saveMetaBtn.disabled = true;
+        const btnMetaText = document.getElementById('btnMetaText');
+        btnMetaText.innerHTML = `<span class="spinner"></span> メタタグ更新中...`;
+
+        try {
+          const inExt = originalFileName.split('.').pop().toLowerCase();
+          const inputName = `meta_in_${Date.now()}.${inExt}`;
+          const outputName = `meta_out_${Date.now()}.${inExt}`;
+
+          const title = document.getElementById('editMetaTitle').value.trim();
+          const artist = document.getElementById('editMetaArtist').value.trim();
+          const album = document.getElementById('editMetaAlbum').value.trim();
+          const genre = document.getElementById('editMetaGenre').value.trim();
+          const year = document.getElementById('editMetaYear').value.trim();
+          const track = document.getElementById('editMetaTrack').value.trim();
+
+          const args = ['-i', inputName];
+          if (title) args.push('-metadata', `title=${title}`);
+          if (artist) args.push('-metadata', `artist=${artist}`);
+          if (album) args.push('-metadata', `album=${album}`);
+          if (genre) args.push('-metadata', `genre=${genre}`);
+          if (year) args.push('-metadata', `date=${year}`);
+          if (track) args.push('-metadata', `track=${track}`);
+          args.push('-c', 'copy', outputName);
+
+          updateProgress(30, "メタタグ書き込み中...");
+          const result = await runWorkerTask(arrayBuffer, inputName, outputName, args);
+
+          const outName = `tagged_${originalFileName}`;
+          const newId = `conv_meta_${Date.now()}`;
+          await saveConvertedFile(newId, originalFileName, outName, result.data, inExt, { title, artist, album, genre, year, track });
+          createFileItemUI(newId, outName, inExt, true, result.data);
+          downloadAllBtn.disabled = false;
+          refreshAudioTargetSelect();
+          refreshMetaTargetSelect();
+          updateProgress(100, "メタタグ更新完了");
+          showToast("メタタグを更新して保存しました");
+        } catch (e) {
+          showCustomAlert("更新エラー", "メタタグの更新に失敗しました: " + e.message);
+        } finally {
+          saveMetaBtn.disabled = false;
+          btnMetaText.textContent = "メタタグを更新して保存";
+        }
+      });
+    }
+
+    // 初期起動
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedLang = localStorage.getItem('user_lang') || 'ja';
+      const savedTheme = localStorage.getItem('user_theme') || 'auto';
+      if (langSelect) langSelect.value = savedLang;
+      if (themeSelect) themeSelect.value = savedTheme;
+      setLanguage(savedLang);
+      setTheme(savedTheme);
+
+      // 初回起動時の利用規約・プライバシーポリシー強制同意フロー
+      await checkFirstLaunchFlow();
+
+      await initDB();
+
+      // バックグラウンドでFFmpeg初期化開始
+      initFFmpeg().catch(e => console.log("FFmpeg lazy init:", e));
+
+      const saved = await getSavedFiles();
+      if (saved.length > 0) {
+        saved.forEach(s => createFileItemUI(s.id, s.fileName, s.inputExt, true, s.data));
+        downloadAllBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

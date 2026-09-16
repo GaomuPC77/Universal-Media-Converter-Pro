@@ -1,0 +1,6 @@
+{
+  "name": "Universal Media Converter Pro",
+  "description": "サーバーにファイルを送信せず、ブラウザだけで安全・無制限に一括変換できる高機能メディア変換ツール。WebMからMP4への高速変換、リアルタイム進捗表示、オーディオ波形加工、メタタグ編集に対応。",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
