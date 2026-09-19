@@ -7,7 +7,7 @@
   <meta name="description" content="ブラウザ内で安全・無制限に一括変換できる高機能メディア変換ツール。WebMからMP4への高速変換に対応。">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
   <style>
     :root {
@@ -23,6 +23,17 @@
       --item-bg: #f1f5f9;
       --shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
     }
+
+    body.is-offline-edition {
+      border-top: 6px solid #d97706;
+    }
+    body.is-offline-edition .offline-indicator {
+      display: inline-block !important;
+      background-color: #d97706 !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+    }
+    .offline-indicator { display: none; }
 
     [data-theme="dark"] {
       --bg-color: #0b0f17;
@@ -390,6 +401,7 @@
       <h1 data-i18n="title">Universal Media Converter Pro</h1>
       <p data-i18n="subTitle">サーバーにファイルを送信せず、ブラウザだけで安全・無制限に一括変換できる高度なメディア変換ツールです。</p>
       <div class="badge-group">
+        <span class="badge offline-indicator">OFFLINE EDITION</span>
         <span class="badge" data-i18n="bdgLocal">100% 端末内処理</span>
         <span class="badge" data-i18n="bdgFast">高速WebM/MP4最適化</span>
         <span class="badge" data-i18n="bdgProgress">リアルタイム進捗</span>
@@ -505,19 +517,19 @@
         <div class="section-title">
           <span data-i18n="audioTabTitle">オーディオ加工・波形編集</span>
         </div>
-        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;">
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;" data-i18n="audioTabDesc">
           選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ）の編集が可能です。
         </p>
 
-        <label>加工対象のファイルを選択:</label>
+        <label data-i18n="lblAudioTarget">加工対象のファイルを選択:</label>
         <select id="audioTargetSelect" class="main-select">
-          <option value="">-- 編集するファイルを選択してください --</option>
+          <option value="" data-i18n="optTargetDefault">-- 編集するファイルを選択してください --</option>
         </select>
 
         <div id="audioEditorForm" class="converter-settings">
           <div class="setting-section">
             <div class="label-row">
-              <span class="label-text">波形表示と切り取り指定 (ドラッグで範囲指定):</span>
+              <span class="label-text" data-i18n="lblWaveformTrim">波形表示と切り取り指定 (ドラッグで範囲指定):</span>
             </div>
             
             <div class="waveform-container" id="waveformContainer">
@@ -525,41 +537,42 @@
             </div>
 
             <div class="trimming-inputs">
-              <input type="text" id="fxTrimStart" placeholder="開始 (秒)" readonly>
+              <input type="text" id="fxTrimStart" placeholder="開始 (秒)" data-i18n-placeholder="phTrimStart" readonly>
               <span>～</span>
-              <input type="text" id="fxTrimEnd" placeholder="終了 (秒)" readonly>
-              <button class="btn-sm" id="btnResetTrim">範囲解除</button>
+              <input type="text" id="fxTrimEnd" placeholder="終了 (秒)" data-i18n-placeholder="phTrimEnd" readonly>
+              <button class="btn-sm" id="btnResetTrim" data-i18n="btnResetTrim">範囲解除</button>
             </div>
           </div>
 
           <div class="range-group">
-            <div class="range-header"><span>ピッチ (音高):</span> <span id="fxPitchVal">0 半音</span></div>
+            <div class="range-header"><span data-i18n="lblPitch">ピッチ (音高):</span> <span id="fxPitchVal">0 半音</span></div>
             <input type="range" id="fxPitch" class="input-range" min="-12" max="12" value="0" step="1">
           </div>
 
           <div class="range-group">
-            <div class="range-header"><span>音量 (ボリューム):</span> <span id="fxVolVal">100%</span></div>
+            <div class="range-header"><span data-i18n="lblVolume">音量 (ボリューム):</span> <span id="fxVolVal">100%</span></div>
             <input type="range" id="fxVol" class="input-range" min="0" max="200" value="100" step="5">
           </div>
 
           <div class="range-group">
-            <div class="range-header"><span>再生速度:</span> <span id="fxSpeedVal">1.0x</span></div>
+            <div class="range-header"><span data-i18n="lblSpeed">再生速度:</span> <span id="fxSpeedVal">1.0x</span></div>
             <input type="range" id="fxSpeed" class="input-range" min="0.5" max="2.0" value="1.0" step="0.05">
           </div>
 
           <div class="dashed-box">
             <div class="setting-section" style="margin-bottom:10px;">
-              <label>EQ プリセット選択:</label>
+              <label data-i18n="lblEqPreset">EQ プリセット選択:</label>
               <select id="eqPresetSelect" class="select-field">
-                <option value="flat">フラット（デフォルト）</option>
-                <option value="vocal">ボーカル強調</option>
-                <option value="bass">低音ブースト</option>
-                <option value="radio">ラジオ風</option>
+                <option value="flat" data-i18n="optEqFlat">フラット（デフォルト）</option>
+                <option value="vocal" data-i18n="optEqVocal">ボーカル強調</option>
+                <option value="bass" data-i18n="optEqBass">低音ブースト</option>
+                <option value="radio" data-i18n="optEqRadio">ラジオ風</option>
+                <option value="custom" data-i18n="optEqCustom">カスタム</option>
               </select>
             </div>
 
             <div>
-              <label>グラフィックイコライザー (5 Band EQ):</label>
+              <label data-i18n="lblGraphicEq">グラフィックイコライザー (5 Band EQ):</label>
               <div class="eq-bands-grid">
                 <div class="eq-band-col">
                   <span class="eq-val-label" id="eqVal60">0dB</span>
@@ -591,9 +604,9 @@
           </div>
 
           <div style="display:flex; gap:10px; margin-top:12px;">
-            <button class="btn" id="btnPreviewFx" style="flex:1; background-color:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);">試聴再生 / 停止</button>
+            <button class="btn" id="btnPreviewFx" style="flex:1; background-color:var(--card-bg); color:var(--text-color); border:1px solid var(--border-color);" data-i18n="btnPreviewFx">試聴再生 / 停止</button>
             <button class="btn btn-primary" id="btnExportAudio" style="flex:1;">
-              <span id="btnExportText">加工・切り取り音声を書き出し</span>
+              <span id="btnExportText" data-i18n="btnExportAudio">加工・切り取り音声を書き出し</span>
             </button>
           </div>
         </div>
@@ -606,44 +619,44 @@
         <div class="section-title">
           <span data-i18n="metaTabTitle">メタタグ（ID3/メタデータ）編集</span>
         </div>
-        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;">
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;" data-i18n="metaTabDesc">
           動画や音声ファイルのメタタグ情報をブラウザ上で直接更新します。
         </p>
 
-        <label>編集対象のファイルを選択:</label>
+        <label data-i18n="lblMetaTarget">編集対象のファイルを選択:</label>
         <select id="metaTargetSelect" class="main-select">
-          <option value="">-- 編集するファイルを選択してください --</option>
+          <option value="" data-i18n="optTargetDefault">-- 編集するファイルを選択してください --</option>
         </select>
 
         <div id="metaEditorForm" class="converter-settings">
           <div class="meta-editor-grid">
             <div>
-              <label>タイトル / 曲名:</label>
+              <label data-i18n="lblMetaTitle">タイトル / 曲名:</label>
               <input type="text" id="editMetaTitle" class="input-text">
             </div>
             <div>
-              <label>アーティスト:</label>
+              <label data-i18n="lblMetaArtist">アーティスト:</label>
               <input type="text" id="editMetaArtist" class="input-text">
             </div>
             <div>
-              <label>アルバム:</label>
+              <label data-i18n="lblMetaAlbum">アルバム:</label>
               <input type="text" id="editMetaAlbum" class="input-text">
             </div>
             <div>
-              <label>ジャンル:</label>
+              <label data-i18n="lblMetaGenre">ジャンル:</label>
               <input type="text" id="editMetaGenre" class="input-text">
             </div>
             <div>
-              <label>年 (Year):</label>
+              <label data-i18n="lblMetaYear">年 (Year):</label>
               <input type="text" id="editMetaYear" class="input-text">
             </div>
             <div>
-              <label>トラック番号:</label>
+              <label data-i18n="lblMetaTrack">トラック番号:</label>
               <input type="text" id="editMetaTrack" class="input-text">
             </div>
           </div>
           <button class="btn btn-primary" id="saveMetaBtn">
-            <span id="btnMetaText">メタタグを更新して保存</span>
+            <span id="btnMetaText" data-i18n="btnSaveMeta">メタタグを更新して保存</span>
           </button>
         </div>
       </div>
@@ -659,11 +672,27 @@
       <!-- 詳細進捗バーエリア -->
       <div class="progress-section">
         <div class="progress-header">
-          <span id="progressStatusText">待機中</span>
+          <span id="progressStatusText" data-i18n="statusIdle">待機中</span>
           <span id="progressPercentText">0%</span>
         </div>
         <div class="progress-bar-bg">
           <div class="progress-bar-fill" id="progressBar"></div>
+        </div>
+      </div>
+
+      <!-- バックグラウンド処理・状態維持バー -->
+      <div class="bg-status-bar" id="bgStatusBar" style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px; margin-top:12px; padding:10px 14px; background:var(--card-sub-bg); border:1px solid var(--border-color); border-radius:8px; font-size:0.8rem; color:var(--text-sub);">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:#10b981;"></span>
+          <span data-i18n="lblStorageAutoSaved">タブを閉じても処理待ち状態を自動保存・復元</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span id="badgeWakeLock" title="モバイル画面スリープ防止機能" style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem;">
+            <span>📱</span> <span data-i18n="lblWakeLockActive">画面オフ防止・バックグラウンド維持</span>
+          </span>
+          <button id="btnToggleNotification" class="btn-sm" style="padding:4px 10px; font-size:0.75rem; cursor:pointer;" data-i18n="btnEnableNotif">
+            🔔 完了通知を有効化
+          </button>
         </div>
       </div>
 
@@ -674,8 +703,8 @@
       </button>
 
       <div class="card-footer">
-        <button class="clear-link" id="clearListBtn">リストを一括クリア</button>
-        <button class="clear-link" id="clearCacheBtn">キャッシュを消去</button>
+        <button class="clear-link" id="clearListBtn" data-i18n="clearListBtn">リストを一括クリア</button>
+        <button class="clear-link" id="clearCacheBtn" data-i18n="clearCacheBtn">キャッシュを消去</button>
       </div>
     </div>
 
@@ -911,7 +940,88 @@
           <p><strong>1. 完全ローカル（端末内）処理の原則</strong><br>本ツールはWebAssembly技術を用い、すべての動画・音声変換、波形解析、メタタグ編集をユーザーのブラウザ（端末内）で完結して実行します。処理対象のファイルデータが外部サーバーへアップロードまたは送信されることは一切ありません。</p>
           <p style="margin-top:6px;"><strong>2. ローカルストレージおよびIndexedDBの利用</strong><br>本ツールはお客様の利便性向上のため、言語・テーマ等の設定値および変換結果のキャッシュを端末内のローカルストレージ（LocalStorage / IndexedDB）にのみ保存します。これらはブラウザの設定またはツール内の消去機能によりいつでも削除できます。</p>
           <p style="margin-top:6px;"><strong>3. 外部ライブラリの読み込み</strong><br>アプリの実行に必要なFFmpeg WASMコアライブラリおよびCDNリソースのロード時を除き、利用者の個人情報や行動履歴をトラッキングまたは外部送信することはありません。</p>
-        </div>`
+        </div>`,
+        offlineGuideTitle: "オフライン用ファイルの準備完了",
+        offlineGuideBody: `
+          <p>ダウンロードしたHTMLファイルと起動用バッチファイルを同じフォルダ（デスクトップなど）に置き、<code>🚀_アプリを起動する.bat</code> をダブルクリックして起動してください。</p>
+          <div class="alert-box-warning">
+            <strong>⚠️ Windows Smart App Control 等の警告が出た場合:</strong><br>
+            バッチファイル実行時に警告が表示された場合は、「詳細情報」をクリックし「実行」を選択してご対応ください。
+          </div>
+        `,
+        audioTabTitle: "オーディオ加工・波形編集",
+        audioTabDesc: "選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ）の編集が可能です。",
+        lblAudioTarget: "加工対象のファイルを選択:",
+        lblWaveformTrim: "波形表示と切り取り指定 (ドラッグで範囲指定):",
+        phTrimStart: "開始 (秒)",
+        phTrimEnd: "終了 (秒)",
+        btnResetTrim: "範囲解除",
+        lblPitch: "ピッチ (音高):",
+        pitchUnit: "半音",
+        lblVolume: "音量 (ボリューム):",
+        lblSpeed: "再生速度:",
+        lblEqPreset: "EQ プリセット選択:",
+        optEqFlat: "フラット（デフォルト）",
+        optEqVocal: "ボーカル強調",
+        optEqBass: "低音ブースト",
+        optEqRadio: "ラジオ風",
+        optEqCustom: "カスタム",
+        lblGraphicEq: "グラフィックイコライザー (5 Band EQ):",
+        btnPreviewFx: "試聴再生 / 停止",
+        btnPreviewStop: "停止",
+        btnExportAudio: "加工・切り取り音声を書き出し",
+        exportingAudio: "書き出し中...",
+        metaTabTitle: "メタタグ（ID3/メタデータ）編集",
+        metaTabDesc: "動画や音声ファイルのメタタグ情報をブラウザ上で直接更新します。",
+        lblMetaTarget: "編集対象のファイルを選択:",
+        lblMetaTitle: "タイトル / 曲名:",
+        lblMetaArtist: "アーティスト:",
+        lblMetaAlbum: "アルバム:",
+        lblMetaGenre: "ジャンル:",
+        lblMetaYear: "年 (Year):",
+        lblMetaTrack: "トラック番号:",
+        btnSaveMeta: "メタタグを更新して保存",
+        updatingMeta: "メタタグ更新中...",
+        statusIdle: "待機中",
+        clearListBtn: "リストを一括クリア",
+        clearCacheBtn: "キャッシュを消去",
+        btnItemPreview: "プレビュー",
+        btnItemClose: "閉じる",
+        btnItemAudioFx: "音声加工",
+        btnItemEditMeta: "タグ編集",
+        btnItemSave: "保存",
+        btnItemDelete: "削除",
+        lblFormatPrefix: "形式: .",
+        statusConverted: "完了",
+        statusWaiting: "待機中",
+        msgNoAudioSelected: "オーディオデータが選択されていません",
+        msgSelectTargetFile: "編集対象のファイルを選択してください",
+        msgCouldNotReadFile: "ファイルデータを読み込めませんでした",
+        msgAudioExported: "加工音声を書き出しました",
+        msgMetaSaved: "メタタグを更新して保存しました",
+        msgListCleared: "リストをクリアしました",
+        msgCacheCleared: "キャッシュを消去しました",
+        msgAllConverted: "全ての変換が正常に完了しました！",
+        msgConversionDone: "変換が完了しました！",
+        msgZipStarted: "ZIPダウンロードを開始しました",
+        msgZipCreating: "ZIPアーカイブを作成中...",
+        msgConvertingProgress: "変換中",
+        msgAudioFxProcessing: "音声エフェクト処理中...",
+        msgAudioFxExporting: "書き出し中...",
+        msgAudioFxComplete: "書き出し完了",
+        msgMetaWriting: "メタタグ書き込み中...",
+        msgMetaComplete: "メタタグ更新完了",
+        msgRestoredPending: "前回の未処理ファイル（{count}件）を復元しました。続けて変換できます。",
+        notifTitle: "変換が完了しました！",
+        notifBody: "全てのメディアファイルの変換が完了しました。クリックして確認・保存できます。",
+        notifAudioComplete: "加工音声を書き出しました",
+        notifMetaComplete: "メタタグを更新して保存しました",
+        wakeLockNotice: "画面スリープ防止が有効です",
+        lblStorageAutoSaved: "タブを閉じても処理待ち状態を自動保存・復元",
+        lblWakeLockActive: "画面オフ防止・バックグラウンド維持",
+        btnEnableNotif: "完了通知を有効化",
+        notifPermitted: "通知: 許可済み",
+        restoredSession: "前回の作業セッションを復元しました"
       },
       en: {
         pageTitle: "Universal Media Converter Pro",
@@ -1011,19 +1121,101 @@
         </ol>`,
         termsTitle: "Terms of Service",
         termsBody: `<div style="line-height:1.6; font-size:0.8rem;">
-          <p><strong>Article 1 (Application)</strong><br>These terms govern your use of Universal Media Converter Pro.</p>
-          <p style="margin-top:6px;"><strong>Article 2 (Copyright Compliance)</strong><br>Users must ensure they possess the necessary rights or authorization for all processed media files.</p>
-          <p style="margin-top:6px;"><strong>Article 3 (Prohibited Actions)</strong><br>Any illegal distribution, copyright infringement, or malicious tampering is strictly prohibited.</p>
-          <p style="margin-top:6px;"><strong>Article 4 (Disclaimer of Warranty)</strong><br>This software is provided "as is" without warranty. Developers assume no liability for data loss or damage.</p>
-          <p style="margin-top:6px;"><strong>Article 5 (AI-Generated Code Disclaimer)</strong><br>Parts of this codebase were assisted by AI models; full fitness for particular purposes is not warranted.</p>
-          <p style="margin-top:6px;"><strong>Article 6 & 7 (Jurisdiction)</strong><br>Governed by applicable laws with right to modify or cease operations.</p>
+          <p><strong>Article 1 (Scope & Application)</strong><br>These Terms of Service set forth the terms and conditions for using Universal Media Converter Pro (hereinafter referred to as "the Tool").</p>
+          <p style="margin-top:6px;"><strong>Article 2 (Compliance with Copyright & Intellectual Property)</strong><br>Users must strictly comply with copyright laws and other intellectual property regulations, and shall only process files for which they own the copyright or have obtained legitimate authorization.</p>
+          <p style="margin-top:6px;"><strong>Article 3 (Prohibited Actions)</strong><br>Creating unlawful video or audio files, infringing upon third-party rights, committing acts that violate laws or public order and morals, or unauthorized reverse-engineering and modification of the Tool are strictly prohibited.</p>
+          <p style="margin-top:6px;"><strong>Article 4 (Disclaimer of Liability)</strong><br>The developer and operators assume no legal liability for any data corruption, data loss, device malfunction, or any other damages resulting from the use of the Tool. Users are strongly advised to back up critical files before use.</p>
+          <p style="margin-top:6px;"><strong>Article 5 (Disclaimer Regarding AI-Assisted Code & Content)</strong><br>This Tool contains code developed with the assistance of AI technologies. Neither the developer nor operators make any express or implied warranty regarding the completeness, accuracy, or fitness for a particular purpose of the conversion features or outputs.</p>
+          <p style="margin-top:6px;"><strong>Article 6 (Modification & Discontinuation of Service)</strong><br>Features of the Tool may be modified, suspended, or discontinued at any time without prior notice.</p>
+          <p style="margin-top:6px;"><strong>Article 7 (Governing Law & Jurisdiction)</strong><br>The interpretation and application of these Terms of Service shall be governed by the laws of Japan.</p>
         </div>`,
         privacyTitle: "Privacy Policy",
         privacyBody: `<div style="line-height:1.6; font-size:0.8rem;">
-          <p><strong>1. Pure Client-Side Execution</strong><br>All media conversions are executed locally in your browser memory via WebAssembly. No media files are ever transmitted to any remote server.</p>
-          <p style="margin-top:6px;"><strong>2. Local Storage Only</strong><br>Preferences and processed file buffers are cached strictly in your browser's IndexedDB / LocalStorage.</p>
-          <p style="margin-top:6px;"><strong>3. Zero Tracking</strong><br>We do not collect personal information, telemetry, or tracking cookies.</p>
-        </div>`
+          <p><strong>1. Principle of 100% Local (On-Device) Processing</strong><br>This Tool leverages WebAssembly technology to execute all video/audio conversion, waveform analysis, and metadata tag editing entirely within the user's browser on the local device. Target media file data is never uploaded or transmitted to any external server under any circumstances.</p>
+          <p style="margin-top:6px;"><strong>2. Use of LocalStorage and IndexedDB</strong><br>To enhance user convenience, user preferences (such as language and theme) and conversion output caches are saved strictly within local storage on your device (LocalStorage / IndexedDB). These can be deleted at any time via browser settings or the cache clearing button in the Tool.</p>
+          <p style="margin-top:6px;"><strong>3. External Library Loading & Zero Tracking</strong><br>Except for loading the necessary FFmpeg WASM core library and CDN resources required to run the application, the Tool does not collect, track, or externally transmit any personal information or behavioral history of users.</p>
+        </div>`,
+        offlineGuideTitle: "Offline Files Ready",
+        offlineGuideBody: `
+          <p>Place both downloaded files in the same folder (such as your Desktop) and double-click <code>🚀_アプリを起動する.bat</code> to launch.</p>
+          <div class="alert-box-warning">
+            <strong>⚠️ If Windows Smart App Control Warning Appears:</strong><br>
+            Click "More Info" and select "Run anyway" to proceed.
+          </div>
+        `,
+        audioTabTitle: "Audio Processing & Waveform Editor",
+        audioTabDesc: "Display waveform of selected audio, select trim range by dragging, and apply audio effects (pitch, speed, and 5-band graphic EQ).",
+        lblAudioTarget: "Select target file to edit:",
+        lblWaveformTrim: "Waveform & Trimming (drag to select range):",
+        phTrimStart: "Start (sec)",
+        phTrimEnd: "End (sec)",
+        btnResetTrim: "Reset Trim",
+        lblPitch: "Pitch:",
+        pitchUnit: "st",
+        lblVolume: "Volume:",
+        lblSpeed: "Playback Speed:",
+        lblEqPreset: "EQ Preset Selection:",
+        optEqFlat: "Flat (Default)",
+        optEqVocal: "Vocal Boost",
+        optEqBass: "Bass Boost",
+        optEqRadio: "Vintage Radio",
+        optEqCustom: "Custom",
+        lblGraphicEq: "Graphic Equalizer (5-Band EQ):",
+        btnPreviewFx: "Preview Audio / Stop",
+        btnPreviewStop: "Stop",
+        btnExportAudio: "Export Processed Audio",
+        exportingAudio: "Exporting...",
+        metaTabTitle: "Metadata (ID3 Tag) Editor",
+        metaTabDesc: "Directly edit and update metadata tags for video and audio files in your browser.",
+        lblMetaTarget: "Select target file to edit:",
+        lblMetaTitle: "Title / Track Name:",
+        lblMetaArtist: "Artist:",
+        lblMetaAlbum: "Album:",
+        lblMetaGenre: "Genre:",
+        lblMetaYear: "Year:",
+        lblMetaTrack: "Track Number:",
+        btnSaveMeta: "Save Updated Metadata",
+        updatingMeta: "Updating Metadata...",
+        statusIdle: "Idle",
+        clearListBtn: "Clear List",
+        clearCacheBtn: "Clear Cache",
+        btnItemPreview: "Preview",
+        btnItemClose: "Close",
+        btnItemAudioFx: "Audio FX",
+        btnItemEditMeta: "Edit Tags",
+        btnItemSave: "Save",
+        btnItemDelete: "Delete",
+        lblFormatPrefix: "Format: .",
+        statusConverted: "Done",
+        statusWaiting: "Pending",
+        msgNoAudioSelected: "No audio data selected",
+        msgSelectTargetFile: "Please select a target file to edit",
+        msgCouldNotReadFile: "Could not read file data",
+        msgAudioExported: "Exported processed audio successfully",
+        msgMetaSaved: "Metadata updated and saved successfully",
+        msgListCleared: "Cleared file list",
+        msgCacheCleared: "Cleared cache",
+        msgAllConverted: "All conversions completed successfully!",
+        msgConversionDone: "Conversion completed!",
+        msgZipStarted: "Started ZIP download",
+        msgZipCreating: "Creating ZIP archive...",
+        msgConvertingProgress: "Converting",
+        msgAudioFxProcessing: "Processing audio effects...",
+        msgAudioFxExporting: "Exporting...",
+        msgAudioFxComplete: "Export completed",
+        msgMetaWriting: "Writing metadata...",
+        msgMetaComplete: "Metadata update completed",
+        msgRestoredPending: "Restored {count} pending file(s) from previous session. Ready to continue.",
+        notifTitle: "Conversion Completed!",
+        notifBody: "All media files have been converted successfully. Click to review and download.",
+        notifAudioComplete: "Exported processed audio successfully",
+        notifMetaComplete: "Metadata updated and saved successfully",
+        wakeLockNotice: "Screen wake lock active",
+        lblStorageAutoSaved: "Queue state auto-saved & restored across tabs",
+        lblWakeLockActive: "Screen Keep-Alive & Background Execution",
+        btnEnableNotif: "Enable Notifications",
+        notifPermitted: "Notifications: Enabled",
+        restoredSession: "Previous working session restored"
       }
     };
 
@@ -1046,9 +1238,63 @@
       });
       document.title = t.pageTitle;
       updateHeaderDatetime();
+
+      // Update pitch label with unit
+      const fxPitchEl = document.getElementById('fxPitch');
+      const fxPitchVal = document.getElementById('fxPitchVal');
+      if (fxPitchEl && fxPitchVal) {
+        fxPitchVal.textContent = `${fxPitchEl.value} ${t.pitchUnit || '半音'}`;
+      }
+
+      // Update preview button text
+      const btnPreview = document.getElementById('btnPreviewFx');
+      if (btnPreview) {
+        btnPreview.textContent = (typeof isPlayingFx !== 'undefined' && isPlayingFx) ? (t.btnPreviewStop || 'Stop') : (t.btnPreviewFx || '試聴再生 / 停止');
+      }
+
+      // Update idle status
+      const statusText = document.getElementById('progressStatusText');
+      if (statusText && (statusText.textContent === '待機中' || statusText.textContent === 'Idle')) {
+        statusText.textContent = t.statusIdle || '待機中';
+      }
+
+      // Update dynamic file list items
+      document.querySelectorAll('.file-item').forEach(fi => {
+        const previewBtn = fi.querySelector('.btn-preview');
+        const previewContainer = fi.querySelector('.preview-container');
+        if (previewBtn) {
+          if (previewContainer && previewContainer.style.display === 'block') {
+            previewBtn.textContent = t.btnItemClose || '閉じる';
+          } else {
+            previewBtn.textContent = t.btnItemPreview || 'プレビュー';
+          }
+        }
+        const afxBtn = fi.querySelector('.btn-audio-fx');
+        if (afxBtn) afxBtn.textContent = t.btnItemAudioFx || '音声加工';
+        const metaBtn = fi.querySelector('.btn-edit-meta');
+        if (metaBtn) metaBtn.textContent = t.btnItemEditMeta || 'タグ編集';
+        const dlBtn = fi.querySelector('.btn-dl');
+        if (dlBtn) dlBtn.textContent = t.btnItemSave || '保存';
+        const rmBtn = fi.querySelector('.btn-remove');
+        if (rmBtn) rmBtn.textContent = t.btnItemDelete || '削除';
+        const fmtPrefix = fi.querySelector('.lbl-fmt-prefix');
+        if (fmtPrefix) fmtPrefix.textContent = t.lblFormatPrefix || '形式: .';
+        const statusSpan = fi.querySelector('.file-status');
+        if (statusSpan) {
+          const isDone = fi.querySelector('.btn-dl') && !fi.querySelector('.btn-dl').disabled;
+          statusSpan.textContent = isDone ? (t.statusConverted || '完了') : (t.statusWaiting || '待機中');
+        }
+      });
+
+      const termsBox = document.getElementById('modalTermsContent');
+      const privacyBox = document.getElementById('modalPrivacyContent');
+      if (termsBox && termsBox.innerHTML) termsBox.innerHTML = `<h5>${t.termsTitle}</h5>${t.termsBody}`;
+      if (privacyBox && privacyBox.innerHTML) privacyBox.innerHTML = `<h5>${t.privacyTitle}</h5>${t.privacyBody}`;
+
       if (typeof refreshConvertTargetSelect === 'function') refreshConvertTargetSelect();
       if (typeof refreshAudioTargetSelect === 'function') refreshAudioTargetSelect();
       if (typeof refreshMetaTargetSelect === 'function') refreshMetaTargetSelect();
+      if (typeof updateNotifBtnUI === 'function') updateNotifBtnUI();
     }
 
     function setTheme(theme) {
@@ -1190,17 +1436,65 @@
       }
     });
 
-    // オフラインパック（自己保存用）
-    document.getElementById('btnDownloadAppPack')?.addEventListener('click', () => {
-      const htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'Universal_Media_Converter_Pro_Offline.html';
-      a.click();
-      URL.revokeObjectURL(url);
-      showToast("オフラインHTMLをダウンロードしました");
+    // オフラインパック（自己保存用・バッチファイル同封構成）
+    const batchScriptContent = `@start converter_core.html`;
+
+    document.getElementById('btnDownloadAppPack')?.addEventListener('click', async () => {
+      try {
+        const t = i18n[currentLang];
+        const [jszipRes, ffmpegRes, coreRes] = await Promise.all([
+          fetch('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'),
+          fetch('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js'),
+          fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js')
+        ]);
+
+        const jszipCode = await jszipRes.text();
+        const ffmpegCode = await ffmpegRes.text();
+        const coreCode = await coreRes.text();
+
+        const coreBlob = new Blob([coreCode], { type: 'application/javascript' });
+        const coreBlobUrl = URL.createObjectURL(coreBlob);
+
+        document.body.classList.add('is-offline-edition');
+        let htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
+        document.body.classList.remove('is-offline-edition');
+
+        htmlContent = htmlContent.replace(
+          /<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/,
+          `<script>${jszipCode}<\/script>`
+        );
+        htmlContent = htmlContent.replace(
+          /<script src="https:\/\/unpkg\.com\/@ffmpeg\/ffmpeg@0\.11\.6\/dist\/ffmpeg\.min\.js"><\/script>/,
+          `<script>${ffmpegCode}<\/script>`
+        );
+        htmlContent = htmlContent.replace(/corePath:\s*['"][^'"]+['"]/, `corePath: '${coreBlobUrl}'`);
+
+        const htmlBlob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+        const htmlUrl = URL.createObjectURL(htmlBlob);
+        const aHtml = document.createElement('a');
+        aHtml.href = htmlUrl;
+        aHtml.download = 'converter_core.html';
+        document.body.appendChild(aHtml);
+        aHtml.click();
+        document.body.removeChild(aHtml);
+        URL.revokeObjectURL(htmlUrl);
+
+        setTimeout(() => {
+          const batBlob = new Blob([batchScriptContent], { type: 'text/plain' });
+          const batUrl = URL.createObjectURL(batBlob);
+          const aBat = document.createElement('a');
+          aBat.href = batUrl;
+          aBat.download = '🚀_アプリを起動する.bat';
+          document.body.appendChild(aBat);
+          aBat.click();
+          document.body.removeChild(aBat);
+          URL.revokeObjectURL(batUrl);
+        }, 500);
+
+        showCustomAlert(t.offlineGuideTitle, t.offlineGuideBody);
+      } catch (err) {
+        showCustomAlert("Error", "Failed to generate offline files.");
+      }
     });
 
     // リネームUI表示切り替え
@@ -1212,8 +1506,8 @@
       renameCustomBox.style.display = e.target.value === 'custom' ? 'flex' : 'none';
     });
 
-    // IndexedDB
-    const DB_NAME = 'MediaConverterPro_v9';
+    // IndexedDB & Persistence Management
+    const DB_NAME = 'MediaConverterPro_v10';
     let db = null;
     let pendingFiles = [];
     const activeBlobUrls = new Map();
@@ -1226,9 +1520,47 @@
           if (!dbObj.objectStoreNames.contains('files')) {
             dbObj.createObjectStore('files', { keyPath: 'id' });
           }
+          if (!dbObj.objectStoreNames.contains('pending_files')) {
+            dbObj.createObjectStore('pending_files', { keyPath: 'key' });
+          }
         };
-        req.onsuccess = (e) => { db = e.target.result; resolve(db); };
+        req.onsuccess = async (e) => {
+          db = e.target.result;
+          try {
+            await migrateFromOldDB();
+          } catch(err) {}
+          resolve(db);
+        };
         req.onerror = () => resolve(null);
+      });
+    }
+
+    async function migrateFromOldDB() {
+      if (!window.indexedDB) return;
+      return new Promise((resolve) => {
+        const checkReq = indexedDB.open('MediaConverterPro_v9', 1);
+        checkReq.onsuccess = (e) => {
+          const oldDb = e.target.result;
+          if (oldDb.objectStoreNames.contains('files')) {
+            const txOld = oldDb.transaction('files', 'readonly');
+            const getAllReq = txOld.objectStore('files').getAll();
+            getAllReq.onsuccess = () => {
+              const oldItems = getAllReq.result || [];
+              if (oldItems.length > 0 && db) {
+                const txNew = db.transaction('files', 'readwrite');
+                const storeNew = txNew.objectStore('files');
+                oldItems.forEach(item => storeNew.put(item));
+              }
+              oldDb.close();
+              resolve();
+            };
+            getAllReq.onerror = () => { oldDb.close(); resolve(); };
+          } else {
+            oldDb.close();
+            resolve();
+          }
+        };
+        checkReq.onerror = () => resolve();
       });
     }
 
@@ -1236,8 +1568,9 @@
       if (!db) return;
       return new Promise((resolve) => {
         const tx = db.transaction('files', 'readwrite');
-        tx.objectStore('files').put({ id, originalName, fileName, data, inputExt, metadata });
+        tx.objectStore('files').put({ id, originalName, fileName, data, inputExt, metadata, date: Date.now() });
         tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
       });
     }
 
@@ -1257,8 +1590,245 @@
         const tx = db.transaction('files', 'readwrite');
         tx.objectStore('files').delete(id);
         tx.oncomplete = () => resolve();
+        tx.onerror = () => resolve();
       });
     }
+
+    // 未処理（処理待ち）ファイルの永続化管理（タブを閉じても安全に復元）
+    async function savePendingFile(key, name, size, type, data) {
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('pending_files', 'readwrite');
+          tx.objectStore('pending_files').put({ key, name, size, type, data, date: Date.now() });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    async function getSavedPendingFiles() {
+      if (!db) return [];
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('pending_files', 'readonly');
+          const req = tx.objectStore('pending_files').getAll();
+          req.onsuccess = () => resolve(req.result || []);
+          req.onerror = () => resolve([]);
+        } catch(e) { resolve([]); }
+      });
+    }
+
+    async function deletePendingFileDB(key) {
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('pending_files', 'readwrite');
+          tx.objectStore('pending_files').delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    async function clearAllPendingFilesDB() {
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('pending_files', 'readwrite');
+          tx.objectStore('pending_files').clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    // フォーム設定値の永続化
+    function saveFormSettings() {
+      try {
+        const settings = {
+          outputFormat: document.getElementById('outputFormat')?.value,
+          quality: document.getElementById('qualityPreset')?.value,
+          renameMode: document.getElementById('renameMode')?.value,
+          renamePrefix: document.getElementById('renamePrefix')?.value,
+          renameSuffix: document.getElementById('renameSuffix')?.value,
+          renameCustom: document.getElementById('renameCustomName')?.value,
+          trimStart: document.getElementById('trimStart')?.value,
+          trimEnd: document.getElementById('trimEnd')?.value
+        };
+        localStorage.setItem('converter_form_settings', JSON.stringify(settings));
+      } catch (e) {}
+    }
+
+    function restoreFormSettings() {
+      try {
+        const saved = localStorage.getItem('converter_form_settings');
+        if (!saved) return;
+        const s = JSON.parse(saved);
+        if (s.outputFormat && document.getElementById('outputFormat')) document.getElementById('outputFormat').value = s.outputFormat;
+        if (s.quality && document.getElementById('qualityPreset')) document.getElementById('qualityPreset').value = s.quality;
+        if (s.renameMode && document.getElementById('renameMode')) {
+          document.getElementById('renameMode').value = s.renameMode;
+          document.getElementById('renameMode').dispatchEvent(new Event('change'));
+        }
+        if (s.renamePrefix && document.getElementById('renamePrefix')) document.getElementById('renamePrefix').value = s.renamePrefix;
+        if (s.renameSuffix && document.getElementById('renameSuffix')) document.getElementById('renameSuffix').value = s.renameSuffix;
+        if (s.renameCustom && document.getElementById('renameCustomName')) document.getElementById('renameCustomName').value = s.renameCustom;
+        if (s.trimStart && document.getElementById('trimStart')) document.getElementById('trimStart').value = s.trimStart;
+        if (s.trimEnd && document.getElementById('trimEnd')) document.getElementById('trimEnd').value = s.trimEnd;
+      } catch (e) {}
+    }
+
+    // バックグラウンド通知 & タブ名リアルタイム更新 & 完了チャイム
+    let isConvertingActive = false;
+
+    function playCompletionChime() {
+      try {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtxClass) return;
+        const ctx = new AudioCtxClass();
+        const now = ctx.currentTime;
+        [523.25, 659.25, 783.99].forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, now + idx * 0.12);
+          gain.gain.setValueAtTime(0, now + idx * 0.12);
+          gain.gain.linearRampToValueAtTime(0.18, now + idx * 0.12 + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.38);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(now + idx * 0.12);
+          osc.stop(now + idx * 0.12 + 0.4);
+        });
+      } catch (e) {}
+    }
+
+    function notifyCompletion(title, message) {
+      const t = i18n[currentLang];
+      const pageTitle = t.title || "Universal Media Converter Pro";
+      document.title = `🔔 [完了] ${title} | ${pageTitle}`;
+
+      playCompletionChime();
+
+      if ('Notification' in window && Notification.permission === 'granted') {
+        try {
+          const notif = new Notification(title, {
+            body: message,
+            icon: 'https://cdn-icons-png.flaticon.com/512/3767/3767084.png',
+            badge: 'https://cdn-icons-png.flaticon.com/512/3767/3767084.png',
+            tag: 'converter-job-done',
+            renotify: true
+          });
+          notif.onclick = function() {
+            window.focus();
+            this.close();
+          };
+        } catch (e) {
+          console.warn("Notification error:", e);
+        }
+      }
+    }
+
+    window.addEventListener('focus', () => {
+      if (!isConvertingActive) {
+        const t = i18n[currentLang];
+        document.title = t.title || "Universal Media Converter Pro";
+      }
+    });
+
+    // スマホ・バックグラウンド実行維持（Screen Wake Lock & Keep-Alive Audio）
+    let wakeLockSentinel = null;
+    let backgroundKeepAlivePlayer = null;
+
+    async function acquireWakeLock() {
+      if ('wakeLock' in navigator) {
+        try {
+          wakeLockSentinel = await navigator.wakeLock.request('screen');
+          wakeLockSentinel.addEventListener('release', () => {
+            wakeLockSentinel = null;
+          });
+        } catch (e) {
+          console.log('Wake lock request error:', e);
+        }
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (wakeLockSentinel) {
+        try {
+          await wakeLockSentinel.release();
+        } catch (e) {}
+        wakeLockSentinel = null;
+      }
+    }
+
+    function startMobileKeepAlive() {
+      acquireWakeLock();
+      try {
+        const AudioCtxClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioCtxClass) return;
+        const keepCtx = new AudioCtxClass();
+        // 1秒の極小無音バッファをループ再生（モバイルOSにメディア再生中と認識させ、バックグラウンド処理の凍結を回避）
+        const buffer = keepCtx.createBuffer(1, keepCtx.sampleRate, keepCtx.sampleRate);
+        const source = keepCtx.createBufferSource();
+        source.buffer = buffer;
+        source.loop = true;
+        const gain = keepCtx.createGain();
+        gain.gain.value = 0.00001; // ほぼ無音
+        source.connect(gain);
+        gain.connect(keepCtx.destination);
+        source.start(0);
+        backgroundKeepAlivePlayer = { ctx: keepCtx, source };
+      } catch (e) {
+        console.log("Background keep-alive audio start failed:", e);
+      }
+    }
+
+    function stopMobileKeepAlive() {
+      releaseWakeLock();
+      if (backgroundKeepAlivePlayer) {
+        try {
+          backgroundKeepAlivePlayer.source.stop();
+          backgroundKeepAlivePlayer.ctx.close();
+        } catch (e) {}
+        backgroundKeepAlivePlayer = null;
+      }
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && isConvertingActive) {
+        acquireWakeLock();
+      }
+    });
+
+    const btnToggleNotif = document.getElementById('btnToggleNotification');
+    function updateNotifBtnUI() {
+      if (!btnToggleNotif) return;
+      const t = i18n[currentLang];
+      if (!('Notification' in window)) {
+        btnToggleNotif.style.display = 'none';
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        btnToggleNotif.textContent = `✓ ${t.notifPermitted || '通知: 許可済み'}`;
+        btnToggleNotif.disabled = true;
+        btnToggleNotif.style.opacity = '0.75';
+      } else {
+        btnToggleNotif.textContent = `🔔 ${t.btnEnableNotif || '完了通知を有効化'}`;
+        btnToggleNotif.disabled = false;
+        btnToggleNotif.style.opacity = '1';
+      }
+    }
+    btnToggleNotif?.addEventListener('click', async () => {
+      if ('Notification' in window) {
+        const perm = await Notification.requestPermission();
+        updateNotifBtnUI();
+        if (perm === 'granted') {
+          showToast(i18n[currentLang].notifPermitted || "完了通知を許可しました");
+        }
+      }
+    });
 
     // FFmpeg.wasm エンジン & リアルタイム進捗管理
     let ffmpegInstance = null;
@@ -1284,7 +1854,7 @@
 
         const { createFFmpeg } = FFmpeg;
         ffmpegInstance = createFFmpeg({
-          corePath: 'https://cdn.jsdelivr.net/npm/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+          corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
           log: true
         });
 
@@ -1347,6 +1917,10 @@
       progressBar.style.width = p + '%';
       progressPercentText.textContent = p + '%';
       if (statusMsg) progressStatusText.textContent = statusMsg;
+      if (isConvertingActive) {
+        const t = i18n[currentLang];
+        document.title = `[${p}%] ${statusMsg || t.msgConvertingProgress || '変換中...'} | ${t.title || 'Universal Media Converter Pro'}`;
+      }
     }
 
     function createFileItemUI(id, displayTitle, detectedExt, isConverted = false, dataBuffer = null) {
@@ -1453,17 +2027,21 @@
           pendingFiles = pendingFiles.filter(f => `${f.name}_${f.size}` !== rawKey);
           await deleteConvertedFileDB(id);
           await deleteConvertedFileDB(`conv_${rawKey}`);
+          await deletePendingFileDB(rawKey);
           item.remove();
           refreshConvertTargetSelect();
           refreshMetaTargetSelect();
           refreshAudioTargetSelect();
 
           const remaining = await getSavedFiles();
-          if (remaining.length === 0 && pendingFiles.length === 0) {
+          const remainingPending = await getSavedPendingFiles();
+          if (remaining.length === 0 && remainingPending.length === 0) {
             downloadAllBtn.disabled = true;
             startConversionBtn.disabled = true;
-            updateProgress(0, '待機中');
+            updateProgress(0, i18n[currentLang].statusIdle || '待機中');
             counterLabel.textContent = '0 / 0';
+          } else if (remainingPending.length === 0) {
+            startConversionBtn.disabled = true;
           }
         });
       }
@@ -1486,20 +2064,28 @@
       }
     }
 
-    function handleFileSelection(files) {
+    async function handleFileSelection(files) {
       if (!files || files.length === 0) return;
-      Array.from(files).forEach(file => {
+      for (const file of Array.from(files)) {
         const uniqueKey = `${file.name}_${file.size}`;
         if (!pendingFiles.some(f => `${f.name}_${f.size}` === uniqueKey)) {
           pendingFiles.push(file);
           const ext = file.name.split('.').pop().toLowerCase();
           createFileItemUI(`pending_${uniqueKey}`, file.name, ext, false);
+          // IndexedDBに未処理ファイルとして永続保存（タブを閉じても安全に維持）
+          try {
+            const buf = await file.arrayBuffer();
+            await savePendingFile(uniqueKey, file.name, file.size, file.type, buf);
+          } catch (e) {
+            console.warn("Pending file persist failed:", e);
+          }
         }
-      });
+      }
       refreshConvertTargetSelect();
       refreshMetaTargetSelect();
       refreshAudioTargetSelect();
       if (pendingFiles.length > 0) startConversionBtn.disabled = false;
+      saveFormSettings();
     }
 
     [fileInput, folderInput, dropInput].forEach(inp => {
@@ -1517,11 +2103,33 @@
       if (e.dataTransfer.files) handleFileSelection(e.dataTransfer.files);
     });
 
-    // 変換実行処理（高速WebM/MP4最適化 ＆ リアルタイム進捗対応）
+    // 設定変更時の自動保存リスナー
+    [
+      outputFormat,
+      document.getElementById('qualityPreset'),
+      renameModeSelect,
+      document.getElementById('renamePrefix'),
+      document.getElementById('renameSuffix'),
+      document.getElementById('renameCustomName'),
+      document.getElementById('trimStart'),
+      document.getElementById('trimEnd')
+    ].forEach(el => {
+      if (el) el.addEventListener('change', saveFormSettings);
+    });
+
+    // 変換実行処理（高速WebM/MP4最適化 ＆ リアルタイム進捗 ＆ スマホ画面オフ維持 ＆ バックグラウンド通知対応）
     startConversionBtn.addEventListener('click', async () => {
       const btnText = document.getElementById('btnText');
       startConversionBtn.disabled = true;
       btnText.innerHTML = `<span class="spinner"></span> 変換処理中...`;
+
+      // ユーザー通知権限のリクエスト（タブ移動時の完了通知用）
+      if ('Notification' in window && Notification.permission === 'default') {
+        try { await Notification.requestPermission(); } catch (e) {}
+      }
+
+      isConvertingActive = true;
+      startMobileKeepAlive();
 
       try {
         if (!ffmpegInstance || !ffmpegInstance.isLoaded()) {
@@ -1661,20 +2269,38 @@
           const targetId = `conv_${uniqueKey}`;
 
           await saveConvertedFile(targetId, file.name, outFileName, result.data, outFormat);
+
+          // 未処理アイテムから削除し、完了アイテムとしてUIおよびDBを更新
+          const pendingItemEl = document.getElementById(`pending_${uniqueKey}`);
+          if (pendingItemEl) pendingItemEl.remove();
+          await deletePendingFileDB(uniqueKey);
+          pendingFiles = pendingFiles.filter(f => `${f.name}_${f.size}` !== uniqueKey);
+
           createFileItemUI(targetId, outFileName, outFormat, true, result.data);
+          refreshConvertTargetSelect();
+          refreshMetaTargetSelect();
+          refreshAudioTargetSelect();
         }
 
-        updateProgress(100, "全ての変換が正常に完了しました！");
+        updateProgress(100, i18n[currentLang].msgAllConverted || "全ての変換が正常に完了しました！");
         downloadAllBtn.disabled = false;
-        showToast("変換が完了しました！");
+        showToast(i18n[currentLang].msgConversionDone || "変換が完了しました！");
+
+        // タブ切り替え者・バックグラウンド待機者への通知 & チャイム音
+        notifyCompletion(
+          i18n[currentLang].notifTitle || "変換が完了しました！",
+          (i18n[currentLang].notifBody || "全てのメディアファイルの変換が完了しました。クリックして確認・保存できます。") + ` (${total} 件)`
+        );
       } catch (err) {
         showCustomAlert("変換エラー", `
           <p style="color:var(--danger-color); font-weight:600;">処理中にエラーが発生しました。</p>
           <p style="margin-top:6px; font-size:0.85rem;">詳細: ${err.message}</p>
         `);
       } finally {
-        startConversionBtn.disabled = false;
-        btnText.textContent = "変換処理を開始する";
+        isConvertingActive = false;
+        stopMobileKeepAlive();
+        startConversionBtn.disabled = pendingFiles.length === 0;
+        btnText.textContent = i18n[currentLang].startConversion || "変換処理を開始する";
       }
     });
 
@@ -1683,7 +2309,7 @@
       const saved = await getSavedFiles();
       if (saved.length === 0) return;
       downloadAllBtn.disabled = true;
-      downloadAllBtn.textContent = "ZIPアーカイブを作成中...";
+      downloadAllBtn.textContent = i18n[currentLang].msgZipCreating || "ZIPアーカイブを作成中...";
 
       try {
         const zip = new JSZip();
@@ -1697,36 +2323,39 @@
         a.download = `converted_media_${Date.now()}.zip`;
         a.click();
         URL.revokeObjectURL(url);
-        showToast("ZIPダウンロードを開始しました");
+        showToast(i18n[currentLang].msgZipStarted || "ZIPダウンロードを開始しました");
       } catch (e) {
         showCustomAlert("エラー", "ZIP作成に失敗しました: " + e.message);
       } finally {
         downloadAllBtn.disabled = false;
-        downloadAllBtn.textContent = "変換済みファイルを一括ZIPダウンロード";
+        downloadAllBtn.textContent = i18n[currentLang].downloadAll || "変換済みファイルを一括ZIPダウンロード";
       }
     });
 
     // リストクリア
-    clearListBtn.addEventListener('click', () => {
+    clearListBtn.addEventListener('click', async () => {
       pendingFiles = [];
+      await clearAllPendingFilesDB();
       fileListEl.innerHTML = '';
       refreshConvertTargetSelect();
       refreshMetaTargetSelect();
       refreshAudioTargetSelect();
       downloadAllBtn.disabled = true;
       startConversionBtn.disabled = true;
-      updateProgress(0, '待機中');
+      updateProgress(0, i18n[currentLang].statusIdle || '待機中');
       counterLabel.textContent = '0 / 0';
-      showToast("リストをクリアしました");
+      showToast(i18n[currentLang].msgListCleared || "リストをクリアしました");
     });
 
     clearCacheBtn.addEventListener('click', async () => {
       if (db) {
-        const tx = db.transaction('files', 'readwrite');
+        const tx = db.transaction(['files', 'pending_files'], 'readwrite');
         tx.objectStore('files').clear();
+        tx.objectStore('pending_files').clear();
       }
+      localStorage.removeItem('converter_form_settings');
       clearListBtn.click();
-      showToast("キャッシュを消去しました");
+      showToast(i18n[currentLang].msgCacheCleared || "キャッシュを消去しました");
     });
 
     // オーディオ波形・加工機能
@@ -1852,20 +2481,106 @@
     });
 
     // EQスライダー連携
+    let fxGainNode = null;
+    let fxFilterNodes = {};
+
+    function updateLiveEq() {
+      if (isPlayingFx && audioCtx) {
+        ['60', '230', '910', '4k', '14k'].forEach(band => {
+          const sl = document.getElementById('eqBand' + band);
+          if (fxFilterNodes[band] && sl) {
+            fxFilterNodes[band].gain.setValueAtTime(parseFloat(sl.value) || 0, audioCtx.currentTime);
+          }
+        });
+      }
+    }
+
+    const eqPresets = {
+      flat:  { '60': 0, '230': 0, '910': 0, '4k': 0, '14k': 0 },
+      vocal: { '60': -3, '230': 1, '910': 4, '4k': 3, '14k': 1 },
+      bass:  { '60': 6, '230': 4, '910': 1, '4k': -1, '14k': -2 },
+      radio: { '60': -12, '230': -3, '910': 5, '4k': 2, '14k': -10 }
+    };
+
+    const eqPresetSelect = document.getElementById('eqPresetSelect');
+    function applyEqPreset(presetKey) {
+      const preset = eqPresets[presetKey];
+      if (!preset) return;
+      ['60', '230', '910', '4k', '14k'].forEach(band => {
+        const val = preset[band];
+        const sl = document.getElementById('eqBand' + band);
+        const vl = document.getElementById('eqVal' + band);
+        if (sl) sl.value = val;
+        if (vl) vl.textContent = (val > 0 ? '+' : '') + val + 'dB';
+      });
+      updateLiveEq();
+    }
+
+    if (eqPresetSelect) {
+      eqPresetSelect.addEventListener('change', (e) => {
+        if (e.target.value !== 'custom') {
+          applyEqPreset(e.target.value);
+        }
+      });
+    }
+
+    function checkEqPresetMatch() {
+      const currentValues = {
+        '60': parseInt(document.getElementById('eqBand60').value) || 0,
+        '230': parseInt(document.getElementById('eqBand230').value) || 0,
+        '910': parseInt(document.getElementById('eqBand910').value) || 0,
+        '4k': parseInt(document.getElementById('eqBand4k').value) || 0,
+        '14k': parseInt(document.getElementById('eqBand14k').value) || 0
+      };
+      let matchedKey = 'custom';
+      for (const [key, preset] of Object.entries(eqPresets)) {
+        if (['60', '230', '910', '4k', '14k'].every(b => preset[b] === currentValues[b])) {
+          matchedKey = key;
+          break;
+        }
+      }
+      if (eqPresetSelect) eqPresetSelect.value = matchedKey;
+    }
+
     ['fxPitch', 'fxVol', 'fxSpeed'].forEach(id => {
       const el = document.getElementById(id);
       const valEl = document.getElementById(id + 'Val');
       el.addEventListener('input', () => {
-        if (id === 'fxPitch') valEl.textContent = `${el.value} 半音`;
-        else if (id === 'fxVol') valEl.textContent = `${el.value}%`;
-        else if (id === 'fxSpeed') valEl.textContent = `${el.value}x`;
+        const t = i18n[currentLang];
+        if (id === 'fxPitch') {
+          valEl.textContent = `${el.value} ${t.pitchUnit || '半音'}`;
+          if (isPlayingFx && fxAudioSource && audioCtx) {
+            const spd = parseFloat(document.getElementById('fxSpeed').value) || 1.0;
+            const pt = parseInt(el.value) || 0;
+            fxAudioSource.playbackRate.setValueAtTime(spd * Math.pow(2, pt / 12), audioCtx.currentTime);
+          }
+        } else if (id === 'fxVol') {
+          valEl.textContent = `${el.value}%`;
+          if (isPlayingFx && fxGainNode && audioCtx) {
+            fxGainNode.gain.setValueAtTime((parseFloat(el.value) || 100) / 100, audioCtx.currentTime);
+          }
+        } else if (id === 'fxSpeed') {
+          valEl.textContent = `${el.value}x`;
+          if (isPlayingFx && fxAudioSource && audioCtx) {
+            const pt = parseInt(document.getElementById('fxPitch').value) || 0;
+            const spd = parseFloat(el.value) || 1.0;
+            fxAudioSource.playbackRate.setValueAtTime(spd * Math.pow(2, pt / 12), audioCtx.currentTime);
+          }
+        }
       });
     });
 
     ['60', '230', '910', '4k', '14k'].forEach(band => {
       const sl = document.getElementById('eqBand' + band);
       const vl = document.getElementById('eqVal' + band);
-      sl.addEventListener('input', () => { vl.textContent = sl.value + 'dB'; });
+      if (sl && vl) {
+        sl.addEventListener('input', () => {
+          const val = parseInt(sl.value) || 0;
+          vl.textContent = (val > 0 ? '+' : '') + val + 'dB';
+          checkEqPresetMatch();
+          updateLiveEq();
+        });
+      }
     });
 
     // メタタグターゲット更新
@@ -1899,8 +2614,9 @@
 
     if (btnPreviewFx) {
       btnPreviewFx.addEventListener('click', () => {
+        const t = i18n[currentLang];
         if (!currentAudioBuffer) {
-          showToast("オーディオデータが選択されていません");
+          showToast(t.msgNoAudioSelected || "オーディオデータが選択されていません");
           return;
         }
         if (isPlayingFx) {
@@ -1909,11 +2625,14 @@
             fxAudioSource = null;
           }
           isPlayingFx = false;
-          btnPreviewFx.textContent = "試聴再生 / 停止";
+          btnPreviewFx.textContent = t.btnPreviewFx || "試聴再生 / 停止";
           return;
         }
 
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
         fxAudioSource = audioCtx.createBufferSource();
         fxAudioSource.buffer = currentAudioBuffer;
 
@@ -1921,52 +2640,90 @@
         const pitch = parseInt(document.getElementById('fxPitch').value) || 0;
         fxAudioSource.playbackRate.value = speed * Math.pow(2, pitch / 12);
 
-        const gainNode = audioCtx.createGain();
-        gainNode.gain.value = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
+        // 5-band Graphic Equalizer Nodes
+        const f60 = audioCtx.createBiquadFilter();
+        f60.type = 'lowshelf';
+        f60.frequency.value = 60;
+        f60.gain.value = parseFloat(document.getElementById('eqBand60').value) || 0;
 
-        fxAudioSource.connect(gainNode);
-        gainNode.connect(audioCtx.destination);
+        const f230 = audioCtx.createBiquadFilter();
+        f230.type = 'peaking';
+        f230.frequency.value = 230;
+        f230.Q.value = 1.0;
+        f230.gain.value = parseFloat(document.getElementById('eqBand230').value) || 0;
+
+        const f910 = audioCtx.createBiquadFilter();
+        f910.type = 'peaking';
+        f910.frequency.value = 910;
+        f910.Q.value = 1.0;
+        f910.gain.value = parseFloat(document.getElementById('eqBand910').value) || 0;
+
+        const f4k = audioCtx.createBiquadFilter();
+        f4k.type = 'peaking';
+        f4k.frequency.value = 4000;
+        f4k.Q.value = 1.0;
+        f4k.gain.value = parseFloat(document.getElementById('eqBand4k').value) || 0;
+
+        const f14k = audioCtx.createBiquadFilter();
+        f14k.type = 'highshelf';
+        f14k.frequency.value = 14000;
+        f14k.gain.value = parseFloat(document.getElementById('eqBand14k').value) || 0;
+
+        fxFilterNodes = { '60': f60, '230': f230, '910': f910, '4k': f4k, '14k': f14k };
+
+        fxGainNode = audioCtx.createGain();
+        fxGainNode.gain.value = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
+
+        // Chain: source -> 60 -> 230 -> 910 -> 4k -> 14k -> gain -> destination
+        fxAudioSource.connect(f60);
+        f60.connect(f230);
+        f230.connect(f910);
+        f910.connect(f4k);
+        f4k.connect(f14k);
+        f14k.connect(fxGainNode);
+        fxGainNode.connect(audioCtx.destination);
 
         let offset = trimRange.start || 0;
         let duration = (trimRange.end > trimRange.start) ? (trimRange.end - trimRange.start) : undefined;
 
         fxAudioSource.start(0, offset, duration);
         isPlayingFx = true;
-        btnPreviewFx.textContent = "停止";
+        btnPreviewFx.textContent = t.btnPreviewStop || "停止";
 
         fxAudioSource.onended = () => {
           isPlayingFx = false;
-          btnPreviewFx.textContent = "試聴再生 / 停止";
+          btnPreviewFx.textContent = t.btnPreviewFx || "試聴再生 / 停止";
         };
       });
     }
 
     if (btnExportAudio) {
       btnExportAudio.addEventListener('click', async () => {
+        const t = i18n[currentLang];
         const id = audioTargetSelect.value;
         if (!id) {
-          showToast("編集対象のファイルを選択してください");
+          showToast(t.msgSelectTargetFile || "編集対象のファイルを選択してください");
           return;
         }
         let arrayBuffer = null;
         let originalFileName = "audio.wav";
         if (id.startsWith('conv_')) {
           const saved = await getSavedFiles();
-          const t = saved.find(s => s.id === id);
-          if (t) { arrayBuffer = t.data.slice(0); originalFileName = t.fileName; }
+          const tSaved = saved.find(s => s.id === id);
+          if (tSaved) { arrayBuffer = tSaved.data.slice(0); originalFileName = tSaved.fileName; }
         } else if (id.startsWith('pending_')) {
           const rawKey = id.replace('pending_', '');
           const f = pendingFiles.find(item => `${item.name}_${item.size}` === rawKey);
           if (f) { arrayBuffer = await f.arrayBuffer(); originalFileName = f.name; }
         }
         if (!arrayBuffer) {
-          showToast("ファイルデータを読み込めませんでした");
+          showToast(t.msgCouldNotReadFile || "ファイルデータを読み込めませんでした");
           return;
         }
 
         btnExportAudio.disabled = true;
         const btnExportText = document.getElementById('btnExportText');
-        btnExportText.innerHTML = `<span class="spinner"></span> 書き出し中...`;
+        btnExportText.innerHTML = `<span class="spinner"></span> ${t.exportingAudio || "書き出し中..."}`;
 
         try {
           const inExt = originalFileName.split('.').pop().toLowerCase() || 'wav';
@@ -2007,9 +2764,9 @@
           }
           args.push('-c:a', 'libmp3lame', '-b:a', '192k', outputName);
 
-          updateProgress(20, "音声エフェクト処理中...");
+          updateProgress(20, t.msgAudioFxProcessing || "音声エフェクト処理中...");
           const result = await runWorkerTask(arrayBuffer, inputName, outputName, args, (ratio) => {
-            updateProgress(Math.round(ratio * 100), `書き出し中... ${Math.round(ratio * 100)}%`);
+            updateProgress(Math.round(ratio * 100), `${t.msgAudioFxExporting || "書き出し中..."} ${Math.round(ratio * 100)}%`);
           });
 
           const outName = `fx_${originalFileName.substring(0, originalFileName.lastIndexOf('.'))}.mp3`;
@@ -2019,43 +2776,44 @@
           downloadAllBtn.disabled = false;
           refreshAudioTargetSelect();
           refreshMetaTargetSelect();
-          updateProgress(100, "書き出し完了");
-          showToast("加工音声を書き出しました");
+          updateProgress(100, t.msgAudioFxComplete || "書き出し完了");
+          showToast(t.msgAudioExported || "加工音声を書き出しました");
         } catch (e) {
           showCustomAlert("書き出しエラー", "音声処理に失敗しました: " + e.message);
         } finally {
           btnExportAudio.disabled = false;
-          btnExportText.textContent = "加工・切り取り音声を書き出し";
+          btnExportText.textContent = t.btnExportAudio || "加工・切り取り音声を書き出し";
         }
       });
     }
 
     if (saveMetaBtn) {
       saveMetaBtn.addEventListener('click', async () => {
+        const t = i18n[currentLang];
         const id = metaTargetSelect.value;
         if (!id) {
-          showToast("編集対象のファイルを選択してください");
+          showToast(t.msgSelectTargetFile || "編集対象のファイルを選択してください");
           return;
         }
         let arrayBuffer = null;
         let originalFileName = "file.mp3";
         if (id.startsWith('conv_')) {
           const saved = await getSavedFiles();
-          const t = saved.find(s => s.id === id);
-          if (t) { arrayBuffer = t.data.slice(0); originalFileName = t.fileName; }
+          const tSaved = saved.find(s => s.id === id);
+          if (tSaved) { arrayBuffer = tSaved.data.slice(0); originalFileName = tSaved.fileName; }
         } else if (id.startsWith('pending_')) {
           const rawKey = id.replace('pending_', '');
           const f = pendingFiles.find(item => `${item.name}_${item.size}` === rawKey);
           if (f) { arrayBuffer = await f.arrayBuffer(); originalFileName = f.name; }
         }
         if (!arrayBuffer) {
-          showToast("ファイルデータを読み込めませんでした");
+          showToast(t.msgCouldNotReadFile || "ファイルデータを読み込めませんでした");
           return;
         }
 
         saveMetaBtn.disabled = true;
         const btnMetaText = document.getElementById('btnMetaText');
-        btnMetaText.innerHTML = `<span class="spinner"></span> メタタグ更新中...`;
+        btnMetaText.innerHTML = `<span class="spinner"></span> ${t.updatingMeta || "メタタグ更新中..."}`;
 
         try {
           const inExt = originalFileName.split('.').pop().toLowerCase();
@@ -2078,7 +2836,7 @@
           if (track) args.push('-metadata', `track=${track}`);
           args.push('-c', 'copy', outputName);
 
-          updateProgress(30, "メタタグ書き込み中...");
+          updateProgress(30, t.msgMetaWriting || "メタタグ書き込み中...");
           const result = await runWorkerTask(arrayBuffer, inputName, outputName, args);
 
           const outName = `tagged_${originalFileName}`;
@@ -2088,13 +2846,13 @@
           downloadAllBtn.disabled = false;
           refreshAudioTargetSelect();
           refreshMetaTargetSelect();
-          updateProgress(100, "メタタグ更新完了");
-          showToast("メタタグを更新して保存しました");
+          updateProgress(100, t.msgMetaComplete || "メタタグ更新完了");
+          showToast(t.msgMetaSaved || "メタタグを更新して保存しました");
         } catch (e) {
           showCustomAlert("更新エラー", "メタタグの更新に失敗しました: " + e.message);
         } finally {
           saveMetaBtn.disabled = false;
-          btnMetaText.textContent = "メタタグを更新して保存";
+          btnMetaText.textContent = t.btnSaveMeta || "メタタグを更新して保存";
         }
       });
     }
@@ -2116,11 +2874,38 @@
       // バックグラウンドでFFmpeg初期化開始
       initFFmpeg().catch(e => console.log("FFmpeg lazy init:", e));
 
+      // 変換済みファイルの復元
       const saved = await getSavedFiles();
       if (saved.length > 0) {
         saved.forEach(s => createFileItemUI(s.id, s.fileName, s.inputExt, true, s.data));
         downloadAllBtn.disabled = false;
       }
+
+      // 未処理（処理待ち）ファイルの復元（タブを閉じても続きから作業可能）
+      const savedPending = await getSavedPendingFiles();
+      if (savedPending.length > 0) {
+        for (const item of savedPending) {
+          try {
+            const reconstructedFile = new File([item.data], item.name, { type: item.type || 'application/octet-stream' });
+            pendingFiles.push(reconstructedFile);
+            const ext = item.name.split('.').pop().toLowerCase();
+            createFileItemUI(`pending_${item.key}`, item.name, ext, false);
+          } catch(e) {
+            console.warn("Restore file error:", e);
+          }
+        }
+        if (pendingFiles.length > 0) {
+          startConversionBtn.disabled = false;
+          counterLabel.textContent = `0 / ${pendingFiles.length}`;
+          showToast(i18n[currentLang].restoredSession || "前回の処理待ちセッションを復元しました");
+        }
+      }
+
+      refreshConvertTargetSelect();
+      refreshMetaTargetSelect();
+      refreshAudioTargetSelect();
+      restoreFormSettings();
+      updateNotifBtnUI();
     });
   </script>
 </body>
