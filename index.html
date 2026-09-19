@@ -36,6 +36,20 @@
     }
     .offline-indicator { display: none; }
 
+    /* オフライン状態およびオフラインパック版では Google Drive 機能を完全に非表示 */
+    body.is-offline-edition #driveAccountStatus,
+    body.is-offline-edition #btnDrivePicker,
+    body.is-offline-edition #saveAllToDriveBtn,
+    body.is-offline-edition .btn-drive,
+    body.is-offline-edition #drivePickerModal,
+    body.is-offline #driveAccountStatus,
+    body.is-offline #btnDrivePicker,
+    body.is-offline #saveAllToDriveBtn,
+    body.is-offline .btn-drive,
+    body.is-offline #drivePickerModal {
+      display: none !important;
+    }
+
     [data-theme="dark"] {
       --bg-color: #0b0f17;
       --card-bg: #151c28;
@@ -474,7 +488,10 @@
           <input type="file" id="folderInput" webkitdirectory directory multiple>
         </div>
         <div class="upload-btn upload-btn-cloud" id="btnDrivePicker" style="cursor: pointer;">
-          <span data-i18n="btnDriveImport">☁️ Google Driveから読込</span>
+          <span style="display: inline-flex; align-items: center; justify-content: center; gap: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+            <span data-i18n="btnDriveImport">Google Driveから読込</span>
+          </span>
         </div>
       </div>
 
@@ -551,6 +568,27 @@
 
           <div class="setting-section">
             <div class="label-row">
+              <span class="label-text" data-i18n="lblTrimAndFade">トリミング ＆ フェード効果:</span>
+            </div>
+            <div class="trimming-inputs" style="margin-bottom: 8px;">
+              <input type="text" id="trimStart" data-i18n-placeholder="phTrimStart" placeholder="開始 (秒/例: 0)">
+              <span>～</span>
+              <input type="text" id="trimEnd" data-i18n-placeholder="phTrimEnd" placeholder="終了 (秒/例: 30)">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+              <div>
+                <label style="font-size: 0.75rem; margin-bottom: 2px;" data-i18n="lblFadeIn">フェードイン (秒):</label>
+                <input type="number" id="convFadeIn" class="input-text" min="0" max="30" step="0.5" value="0" placeholder="0" style="margin-bottom: 0; padding: 6px 10px; font-size: 0.85rem;">
+              </div>
+              <div>
+                <label style="font-size: 0.75rem; margin-bottom: 2px;" data-i18n="lblFadeOut">フェードアウト (秒):</label>
+                <input type="number" id="convFadeOut" class="input-text" min="0" max="30" step="0.5" value="0" placeholder="0" style="margin-bottom: 0; padding: 6px 10px; font-size: 0.85rem;">
+              </div>
+            </div>
+          </div>
+
+          <div class="setting-section">
+            <div class="label-row">
               <span class="label-text" data-i18n="lblAudioAdjust">音声調整:</span>
             </div>
             <label class="checkbox-row" for="chkNormalize">
@@ -573,7 +611,7 @@
           <span data-i18n="audioTabTitle">オーディオ加工・波形編集</span>
         </div>
         <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;" data-i18n="audioTabDesc">
-          選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ）の編集が可能です。
+          選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ・フェード）の編集が可能です。
         </p>
 
         <label data-i18n="lblAudioTarget">加工対象のファイルを選択:</label>
@@ -596,6 +634,17 @@
               <span>～</span>
               <input type="text" id="fxTrimEnd" placeholder="終了 (秒)" data-i18n-placeholder="phTrimEnd" readonly>
               <button class="btn-sm" id="btnResetTrim" data-i18n="btnResetTrim">範囲解除</button>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+            <div class="range-group">
+              <div class="range-header"><span data-i18n="lblFadeIn">フェードイン:</span> <span id="fxFadeInVal">0s</span></div>
+              <input type="range" id="fxFadeIn" class="input-range" min="0" max="10" value="0" step="0.5">
+            </div>
+            <div class="range-group">
+              <div class="range-header"><span data-i18n="lblFadeOut">フェードアウト:</span> <span id="fxFadeOutVal">0s</span></div>
+              <input type="range" id="fxFadeOut" class="input-range" min="0" max="10" value="0" step="0.5">
             </div>
           </div>
 
@@ -743,10 +792,12 @@
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
           <span id="badgeWakeLock" title="モバイル画面スリープ防止機能" style="display:inline-flex; align-items:center; gap:4px; font-size:0.75rem;">
-            <span>📱</span> <span data-i18n="lblWakeLockActive">画面オフ防止・バックグラウンド維持</span>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+            <span data-i18n="lblWakeLockActive">画面オフ防止・バックグラウンド維持</span>
           </span>
-          <button id="btnToggleNotification" class="btn-sm" style="padding:4px 10px; font-size:0.75rem; cursor:pointer;" data-i18n="btnEnableNotif">
-            🔔 完了通知を有効化
+          <button id="btnToggleNotification" class="btn-sm" style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; font-size:0.75rem; cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+            <span id="btnToggleNotifText" data-i18n="btnEnableNotif">完了通知を有効化</span>
           </button>
         </div>
       </div>
@@ -757,8 +808,9 @@
         <button class="btn" id="downloadAllBtn" data-i18n="downloadAll" style="flex: 1; min-width: 200px; margin-top: 0;" disabled>
           変換済みファイルを一括ZIPダウンロード
         </button>
-        <button class="btn btn-drive-action" id="saveAllToDriveBtn" data-i18n="btnSaveAllToDrive" style="flex: 1; min-width: 200px; margin-top: 0;" disabled>
-          ☁️ Google Driveへ一括保存
+        <button class="btn btn-drive-action" id="saveAllToDriveBtn" style="flex: 1; min-width: 200px; margin-top: 0; display: inline-flex; align-items: center; justify-content: center; gap: 6px;" disabled>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="12 13 12 6 9 9"/><polyline points="12 6 15 9"/></svg>
+          <span id="saveAllToDriveBtnText" data-i18n="btnSaveAllToDrive">Google Driveへ一括保存</span>
         </button>
       </div>
 
@@ -857,8 +909,9 @@
           <div class="terms-split-box" id="modalTermsContent"></div>
           <div class="terms-split-box" id="modalPrivacyContent"></div>
         </div>
-        <div class="alert-box-warning" data-i18n="firstTermsWarning">
-          ⚠️ 注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。
+        <div class="alert-box-warning" style="display:flex; align-items:center; gap:6px;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0; color:#d97706;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+          <span data-i18n="firstTermsWarning">注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。</span>
         </div>
         <label class="checkbox-row" for="chkAgreeTerms" style="justify-content: center; margin-top: 12px;">
           <input type="checkbox" id="chkAgreeTerms" class="checkbox-field">
@@ -876,7 +929,9 @@
     <div class="modal-box">
       <div class="modal-header">
         <div class="modal-title" id="customModalTitle">お知らせ</div>
-        <button class="modal-close" id="customModalClose">✕</button>
+        <button class="modal-close" id="customModalClose" aria-label="閉じる">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
       <div class="modal-body" id="customModalBody"></div>
       <div class="modal-footer">
@@ -890,14 +945,41 @@
     <div class="modal-box" style="max-width: 680px; width: 100%; max-height: 88vh;">
       <div class="modal-header">
         <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
-          <span>☁️</span>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
           <span data-i18n="drivePickerTitle">Google Drive からメディアを選択</span>
         </div>
-        <button class="modal-close" id="drivePickerClose">✕</button>
+        <button class="modal-close" id="drivePickerClose" aria-label="閉じる">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
       </div>
-      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
-        <input type="text" id="driveSearchInput" placeholder="Drive内の動画・音声を検索..." data-i18n-placeholder="driveSearchPh" style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
-        <button class="btn-sm" id="btnDriveRefresh" title="更新" style="padding: 0 12px; cursor: pointer;">🔄 <span data-i18n="btnRefresh">更新</span></button>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+        <input type="text" id="driveSearchInput" placeholder="Drive内の動画・音声を検索..." data-i18n-placeholder="driveSearchPh" style="flex: 1; min-width: 170px; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color); font-size: 0.85rem;">
+        <select id="driveExtFilterSelect" class="select-sm" style="padding: 8px 10px; font-size: 0.85rem; border-radius: 6px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-color); cursor: pointer;">
+          <option value="all" data-i18n="driveFilterAll">すべての対応形式</option>
+          <optgroup label="動画形式 (Video)" data-i18n-label="grpVideoLabel">
+            <option value="video_all" data-i18n="driveFilterVideoAll">動画形式すべて (MP4, MOV, WebM...)</option>
+            <option value="mp4">.mp4</option>
+            <option value="mov">.mov</option>
+            <option value="webm">.webm</option>
+            <option value="avi">.avi</option>
+            <option value="mkv">.mkv</option>
+            <option value="wmv">.wmv</option>
+            <option value="flv">.flv</option>
+          </optgroup>
+          <optgroup label="音声形式 (Audio)" data-i18n-label="grpAudioLabel">
+            <option value="audio_all" data-i18n="driveFilterAudioAll">音声形式すべて (MP3, WAV, M4A...)</option>
+            <option value="mp3">.mp3</option>
+            <option value="wav">.wav</option>
+            <option value="m4a">.m4a</option>
+            <option value="aac">.aac</option>
+            <option value="ogg">.ogg</option>
+            <option value="flac">.flac</option>
+          </optgroup>
+        </select>
+        <button class="btn-sm" id="btnDriveRefresh" title="更新" style="display: inline-flex; align-items: center; gap: 4px; padding: 0 12px; cursor: pointer;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg>
+          <span data-i18n="btnRefresh">更新</span>
+        </button>
       </div>
       <div id="driveUserNotice" style="display: none; font-size: 0.78rem; color: var(--text-sub); margin-bottom: 8px; padding: 6px 10px; background: var(--item-bg); border-radius: 6px;"></div>
       <div id="driveLoadingIndicator" style="display: none; text-align: center; padding: 36px 10px; color: var(--text-sub);">
@@ -979,7 +1061,7 @@
         linkPrivacy: "プライバシーポリシー",
         firstTermsTitle: "利用規約とプライバシーポリシーの確認",
         firstTermsNotice: "本ツールをご利用いただく前に、以下の利用規約およびプライバシーポリシーをご確認ください。",
-        firstTermsWarning: "⚠️ 注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。",
+        firstTermsWarning: "注意: 変換処理はすべてお使いの端末ブラウザ内（WASM）で実行されます。著作権法等の関連法令を遵守してご利用ください。",
         chkAgreeLabel: "利用規約とプライバシーポリシーに同意します",
         btnAgreeStart: "同意して利用開始",
         featTitle: "本ツールの特徴",
@@ -1038,9 +1120,9 @@
         </div>`,
         offlineGuideTitle: "オフライン用ファイルの準備完了",
         offlineGuideBody: `
-          <p>ダウンロードしたHTMLファイルと起動用バッチファイルを同じフォルダ（デスクトップなど）に置き、<code>🚀_アプリを起動する.bat</code> をダブルクリックして起動してください。</p>
+          <p>ダウンロードしたHTMLファイルと起動用バッチファイルを同じフォルダ（デスクトップなど）に置き、<code>アプリを起動する.bat</code> をダブルクリックして起動してください。</p>
           <div class="alert-box-warning">
-            <strong>⚠️ Windows Smart App Control 等の警告が出た場合:</strong><br>
+            <strong>Windows Smart App Control 等の警告が出た場合:</strong><br>
             バッチファイル実行時に警告が表示された場合は、「詳細情報」をクリックし「実行」を選択してご対応ください。
           </div>
         `,
@@ -1048,6 +1130,11 @@
         audioTabDesc: "選択した音声の波形を表示し、切り取り（トリミング）範囲のドラッグ指定やエフェクト（ピッチ・速度・グラフィックEQ）の編集が可能です。",
         lblAudioTarget: "加工対象のファイルを選択:",
         lblWaveformTrim: "波形表示と切り取り指定 (ドラッグで範囲指定):",
+        lblTrimAndFade: "トリミング ＆ フェード効果:",
+        lblFadeIn: "フェードイン (秒):",
+        lblFadeOut: "フェードアウト (秒):",
+        phFadeIn: "フェードイン (秒)",
+        phFadeOut: "フェードアウト (秒)",
         phTrimStart: "開始 (秒)",
         phTrimEnd: "終了 (秒)",
         btnResetTrim: "範囲解除",
@@ -1120,11 +1207,11 @@
         driveDisconnected: "Google Drive: 未接続",
         btnConnectDrive: "連携",
         btnDisconnectDrive: "解除",
-        btnDriveImport: "☁️ Google Driveから読込",
-        btnSaveAllToDrive: "☁️ Google Driveへ一括保存",
-        btnDriveSave: "☁️ Drive",
-        btnDriveSaved: "✓ Drive保存済",
-        btnDriveView: "開く ↗",
+        btnDriveImport: "Google Driveから読込",
+        btnSaveAllToDrive: "Google Driveへ一括保存",
+        btnDriveSave: "Drive",
+        btnDriveSaved: "Drive保存済",
+        btnDriveView: "開く",
         drivePickerTitle: "Google Drive からメディアを選択",
         driveSearchPh: "Drive内の動画・音声を検索...",
         btnRefresh: "更新",
@@ -1143,7 +1230,10 @@
         driveAuthErrorTitle: "Google Drive 連携エラー",
         driveGisNotLoaded: "Google連携ライブラリの読み込み中です。少し待って再試行してください。",
         driveOriginHelpTitle: "【Google Cloud 設定の確認手順】",
-        driveOriginHelpDesc: "Google CloudコンソールのOAuth 2.0 クライアント設定にて、「承認済みの JavaScript 生成元」に現在のアプリURLを追加してください:"
+        driveOriginHelpDesc: "Google CloudコンソールのOAuth 2.0 クライアント設定にて、「承認済みの JavaScript 生成元」に現在のアプリURLを追加してください:",
+        driveFilterAll: "すべての対応形式",
+        driveFilterVideoAll: "動画形式すべて (MP4, MOV, WebM...)",
+        driveFilterAudioAll: "音声形式すべて (MP3, WAV, M4A...)"
       },
       en: {
         pageTitle: "Universal Media Converter Pro",
@@ -1187,6 +1277,11 @@
         renameCustomNamePh: "File name (e.g. video)",
         lblAudioAdjust: "Audio Adjustments:",
         lblNormalize: "Normalize Volume (loudnorm)",
+        lblTrimAndFade: "Trim & Fade Effects:",
+        lblFadeIn: "Fade In (sec):",
+        lblFadeOut: "Fade Out (sec):",
+        phFadeIn: "Fade In (s)",
+        phFadeOut: "Fade Out (s)",
         targetPrefixPending: "[Target]",
         targetPrefixSaved: "[Saved]",
         targetPrefixWaiting: "[Waiting]",
@@ -1201,7 +1296,7 @@
         linkPrivacy: "Privacy Policy",
         firstTermsTitle: "Terms of Service & Privacy Policy",
         firstTermsNotice: "Please review and accept our Terms of Service and Privacy Policy before using this tool.",
-        firstTermsWarning: "⚠️ Note: All conversions run 100% inside your browser via WASM. You are responsible for complying with copyright laws.",
+        firstTermsWarning: "Note: All conversions run 100% inside your browser via WASM. You are responsible for complying with copyright laws.",
         chkAgreeLabel: "I agree to the Terms of Service and Privacy Policy",
         btnAgreeStart: "Agree & Get Started",
         featTitle: "Tool Features",
@@ -1259,9 +1354,9 @@
         </div>`,
         offlineGuideTitle: "Offline Files Ready",
         offlineGuideBody: `
-          <p>Place both downloaded files in the same folder (such as your Desktop) and double-click <code>🚀_アプリを起動する.bat</code> to launch.</p>
+          <p>Place both downloaded files in the same folder (such as your Desktop) and double-click <code>run_app.bat</code> to launch.</p>
           <div class="alert-box-warning">
-            <strong>⚠️ If Windows Smart App Control Warning Appears:</strong><br>
+            <strong>If Windows Smart App Control Warning Appears:</strong><br>
             Click "More Info" and select "Run anyway" to proceed.
           </div>
         `,
@@ -1341,11 +1436,11 @@
         driveDisconnected: "Google Drive: Disconnected",
         btnConnectDrive: "Connect",
         btnDisconnectDrive: "Disconnect",
-        btnDriveImport: "☁️ Google Drive Import",
-        btnSaveAllToDrive: "☁️ Save All to Google Drive",
-        btnDriveSave: "☁️ Drive",
-        btnDriveSaved: "✓ Saved to Drive",
-        btnDriveView: "Open ↗",
+        btnDriveImport: "Google Drive Import",
+        btnSaveAllToDrive: "Save All to Google Drive",
+        btnDriveSave: "Drive",
+        btnDriveSaved: "Saved to Drive",
+        btnDriveView: "Open",
         drivePickerTitle: "Select Media from Google Drive",
         driveSearchPh: "Search videos & audios in Drive...",
         btnRefresh: "Refresh",
@@ -1364,7 +1459,10 @@
         driveAuthErrorTitle: "Google Drive Error",
         driveGisNotLoaded: "Google Identity library is initializing. Please retry in a moment.",
         driveOriginHelpTitle: "Google Cloud Console Setup",
-        driveOriginHelpDesc: "In your Google Cloud Console OAuth 2.0 Client credentials, please add this URL to 'Authorized JavaScript origins':"
+        driveOriginHelpDesc: "In your Google Cloud Console OAuth 2.0 Client credentials, please add this URL to 'Authorized JavaScript origins':",
+        driveFilterAll: "All Supported Formats",
+        driveFilterVideoAll: "All Video Formats (MP4, MOV, WebM...)",
+        driveFilterAudioAll: "All Audio Formats (MP3, WAV, M4A...)"
       }
     };
 
@@ -1589,25 +1687,44 @@
     const batchScriptContent = `@start converter_core.html`;
 
     document.getElementById('btnDownloadAppPack')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btnDownloadAppPack');
+      const origHtml = btn ? btn.innerHTML : '';
       try {
         const t = i18n[currentLang];
-        const [jszipRes, ffmpegRes, coreRes] = await Promise.all([
+        if (btn) {
+          btn.disabled = true;
+          btn.innerHTML = `
+            <span class="spinner" style="width:12px; height:12px; border-width:2px; border-top-color:currentColor;"></span>
+            <span>パック生成中...</span>
+          `;
+        }
+
+        const [jszipRes, ffmpegRes, coreRes, wasmRes] = await Promise.all([
           fetch('https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'),
           fetch('https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js'),
-          fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js')
+          fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js'),
+          fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.wasm')
         ]);
 
         const jszipCode = await jszipRes.text();
         const ffmpegCode = await ffmpegRes.text();
         const coreCode = await coreRes.text();
+        const wasmBuf = await wasmRes.arrayBuffer();
 
-        const coreBlob = new Blob([coreCode], { type: 'application/javascript' });
-        const coreBlobUrl = URL.createObjectURL(coreBlob);
+        // 大きなWASM ArrayBufferを安全にBase64文字列にエンコード
+        let wasmBase64 = '';
+        const wasmBytes = new Uint8Array(wasmBuf);
+        const chunkSize = 0x8000;
+        for (let i = 0; i < wasmBytes.length; i += chunkSize) {
+          wasmBase64 += String.fromCharCode.apply(null, wasmBytes.subarray(i, i + chunkSize));
+        }
+        wasmBase64 = btoa(wasmBase64);
 
         document.body.classList.add('is-offline-edition');
         let htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
         document.body.classList.remove('is-offline-edition');
 
+        // 外部スクリプトタグをインラインコードに置換
         htmlContent = htmlContent.replace(
           /<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/,
           `<script>${jszipCode}<\/script>`
@@ -1616,7 +1733,17 @@
           /<script src="https:\/\/unpkg\.com\/@ffmpeg\/ffmpeg@0\.11\.6\/dist\/ffmpeg\.min\.js"><\/script>/,
           `<script>${ffmpegCode}<\/script>`
         );
-        htmlContent = htmlContent.replace(/corePath:\s*['"][^'"]+['"]/, `corePath: '${coreBlobUrl}'`);
+        htmlContent = htmlContent.replace(
+          /<script src="https:\/\/accounts\.google\.com\/gsi\/client" async defer><\/script>/,
+          ''
+        );
+
+        // CoreとWASMをプレーンテキスト/Base64スクリプトとしてHTMLに埋め込み
+        const embeddedScripts = `
+  <script id="embedded-ffmpeg-core" type="text/plain">${coreCode.replace(/<\/script>/gi, '<\\/script>')}<\/script>
+  <script id="embedded-ffmpeg-wasm" type="text/plain">${wasmBase64}<\/script>
+`;
+        htmlContent = htmlContent.replace('</head>', `${embeddedScripts}\n</head>`);
 
         const htmlBlob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
         const htmlUrl = URL.createObjectURL(htmlBlob);
@@ -1633,7 +1760,7 @@
           const batUrl = URL.createObjectURL(batBlob);
           const aBat = document.createElement('a');
           aBat.href = batUrl;
-          aBat.download = '🚀_アプリを起動する.bat';
+          aBat.download = 'アプリを起動する.bat';
           document.body.appendChild(aBat);
           aBat.click();
           document.body.removeChild(aBat);
@@ -1642,7 +1769,13 @@
 
         showCustomAlert(t.offlineGuideTitle, t.offlineGuideBody);
       } catch (err) {
-        showCustomAlert("Error", "Failed to generate offline files.");
+        console.error("Offline pack generation failed:", err);
+        showCustomAlert("Error", "オフライン用ファイルの生成に失敗しました: " + err.message);
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = origHtml;
+        }
       }
     });
 
@@ -1803,7 +1936,9 @@
           renameSuffix: document.getElementById('renameSuffix')?.value,
           renameCustom: document.getElementById('renameCustomName')?.value,
           trimStart: document.getElementById('trimStart')?.value,
-          trimEnd: document.getElementById('trimEnd')?.value
+          trimEnd: document.getElementById('trimEnd')?.value,
+          convFadeIn: document.getElementById('convFadeIn')?.value,
+          convFadeOut: document.getElementById('convFadeOut')?.value
         };
         localStorage.setItem('converter_form_settings', JSON.stringify(settings));
       } catch (e) {}
@@ -1825,6 +1960,8 @@
         if (s.renameCustom && document.getElementById('renameCustomName')) document.getElementById('renameCustomName').value = s.renameCustom;
         if (s.trimStart && document.getElementById('trimStart')) document.getElementById('trimStart').value = s.trimStart;
         if (s.trimEnd && document.getElementById('trimEnd')) document.getElementById('trimEnd').value = s.trimEnd;
+        if (s.convFadeIn && document.getElementById('convFadeIn')) document.getElementById('convFadeIn').value = s.convFadeIn;
+        if (s.convFadeOut && document.getElementById('convFadeOut')) document.getElementById('convFadeOut').value = s.convFadeOut;
       } catch (e) {}
     }
 
@@ -1856,7 +1993,7 @@
     function notifyCompletion(title, message) {
       const t = i18n[currentLang];
       const pageTitle = t.title || "Universal Media Converter Pro";
-      document.title = `🔔 [完了] ${title} | ${pageTitle}`;
+      document.title = `[完了] ${title} | ${pageTitle}`;
 
       playCompletionChime();
 
@@ -1960,11 +2097,17 @@
         return;
       }
       if (Notification.permission === 'granted') {
-        btnToggleNotif.textContent = `✓ ${t.notifPermitted || '通知: 許可済み'}`;
+        btnToggleNotif.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          <span>${t.notifPermitted || '通知: 許可済み'}</span>
+        `;
         btnToggleNotif.disabled = true;
         btnToggleNotif.style.opacity = '0.75';
       } else {
-        btnToggleNotif.textContent = `🔔 ${t.btnEnableNotif || '完了通知を有効化'}`;
+        btnToggleNotif.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+          <span id="btnToggleNotifText">${t.btnEnableNotif || '完了通知を有効化'}</span>
+        `;
         btnToggleNotif.disabled = false;
         btnToggleNotif.style.opacity = '1';
       }
@@ -2001,9 +2144,37 @@
           throw new Error("FFmpegライブラリのロードに失敗しました。インターネット接続を確認してください。");
         }
 
+        let corePath = 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js';
+
+        // オフラインパック内にインライン埋め込みされたCore/WASMの検出とBlob URL化
+        const embeddedCoreEl = document.getElementById('embedded-ffmpeg-core');
+        const embeddedWasmEl = document.getElementById('embedded-ffmpeg-wasm');
+
+        if (embeddedCoreEl && embeddedCoreEl.textContent.trim().length > 0) {
+          let coreScriptContent = embeddedCoreEl.textContent;
+          if (embeddedWasmEl && embeddedWasmEl.textContent.trim().length > 0) {
+            try {
+              const rawB64 = embeddedWasmEl.textContent.trim();
+              const binaryString = atob(rawB64);
+              const bytes = new Uint8Array(binaryString.length);
+              for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+              }
+              const wasmBlob = new Blob([bytes], { type: 'application/wasm' });
+              const wasmBlobUrl = URL.createObjectURL(wasmBlob);
+              coreScriptContent = coreScriptContent.replace(/ffmpeg-core\.wasm/g, wasmBlobUrl);
+            } catch (wasmErr) {
+              console.warn("WASM blob extraction error:", wasmErr);
+            }
+          }
+          const coreBlob = new Blob([coreScriptContent], { type: 'application/javascript' });
+          corePath = URL.createObjectURL(coreBlob);
+        }
+
         const { createFFmpeg } = FFmpeg;
         ffmpegInstance = createFFmpeg({
-          corePath: 'https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js',
+          mainName: 'main',
+          corePath: corePath,
           log: true
         });
 
@@ -2089,7 +2260,10 @@
               <button class="btn-sm btn-audio-fx">音声加工</button>
               <button class="btn-sm btn-edit-meta">タグ編集</button>
               <button class="btn-sm btn-success btn-dl" ${isConverted ? '' : 'disabled'}>保存</button>
-              <button class="btn-sm btn-drive" style="${isConverted ? '' : 'display:none;'} background:#0284c7; color:#fff; border:none; padding:4px 8px; font-weight:500;" title="Google Driveに保存">☁️ Drive</button>
+              <button class="btn-sm btn-drive" style="${isConverted ? '' : 'display:none;'} background:#0284c7; color:#fff; border:none; padding:4px 8px; font-weight:500; display:${isConverted ? 'inline-flex' : 'none'}; align-items:center; gap:4px;" title="Google Driveに保存">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="12 13 12 6 9 9"/><polyline points="12 6 15 9"/></svg>
+                <span>Drive</span>
+              </button>
               <button class="btn-sm btn-danger btn-remove">削除</button>
             </div>
           </div>
@@ -2286,9 +2460,14 @@
       document.getElementById('renameSuffix'),
       document.getElementById('renameCustomName'),
       document.getElementById('trimStart'),
-      document.getElementById('trimEnd')
+      document.getElementById('trimEnd'),
+      document.getElementById('convFadeIn'),
+      document.getElementById('convFadeOut')
     ].forEach(el => {
-      if (el) el.addEventListener('change', saveFormSettings);
+      if (el) {
+        el.addEventListener('change', saveFormSettings);
+        el.addEventListener('input', saveFormSettings);
+      }
     });
 
     // 変換実行処理（高速WebM/MP4最適化 ＆ リアルタイム進捗 ＆ スマホ画面オフ維持 ＆ バックグラウンド通知対応）
@@ -2407,6 +2586,24 @@
           if (document.getElementById('chkNormalize')?.checked) {
             afFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
           }
+
+          // フェードイン ＆ フェードアウト
+          const convFadeIn = parseFloat(document.getElementById('convFadeIn')?.value || '0');
+          const convFadeOut = parseFloat(document.getElementById('convFadeOut')?.value || '0');
+          if (convFadeIn > 0) {
+            afFilters.push(`afade=t=in:ss=0:d=${convFadeIn.toFixed(2)}`);
+          }
+          if (convFadeOut > 0) {
+            const tStartVal = parseFloat(trimStart || '0');
+            const tEndVal = parseFloat(trimEnd || '0');
+            if (tEndVal > tStartVal && (tEndVal - tStartVal) > convFadeOut) {
+              const clipLen = tEndVal - tStartVal;
+              afFilters.push(`afade=t=out:st=${(clipLen - convFadeOut).toFixed(2)}:d=${convFadeOut.toFixed(2)}`);
+            } else {
+              afFilters.push(`areverse,afade=t=in:ss=0:d=${convFadeOut.toFixed(2)},areverse`);
+            }
+          }
+
           if (afFilters.length > 0) {
             args.push('-af', afFilters.join(','));
           }
@@ -2568,13 +2765,57 @@
         ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
       }
 
-      if (trimRange.end > trimRange.start) {
+      const hasTrim = trimRange.end > trimRange.start;
+      const baseStart = hasTrim ? trimRange.start : 0;
+      const baseEnd = hasTrim ? trimRange.end : currentAudioBuffer.duration;
+      const clipDuration = baseEnd - baseStart;
+
+      if (hasTrim) {
         const startX = (trimRange.start / currentAudioBuffer.duration) * width;
         const endX = (trimRange.end / currentAudioBuffer.duration) * width;
-        ctx.fillStyle = 'rgba(37, 99, 235, 0.3)';
+        ctx.fillStyle = 'rgba(37, 99, 235, 0.22)';
         ctx.fillRect(startX, 0, endX - startX, height);
         ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 1.5;
         ctx.strokeRect(startX, 0, endX - startX, height);
+      }
+
+      // フェードイン・フェードアウトの波形ビジュアル表示
+      const fadeInSec = parseFloat(document.getElementById('fxFadeIn')?.value || '0');
+      const fadeOutSec = parseFloat(document.getElementById('fxFadeOut')?.value || '0');
+
+      if (fadeInSec > 0 && clipDuration > 0) {
+        const effFadeIn = Math.min(fadeInSec, clipDuration);
+        const fiStartX = (baseStart / currentAudioBuffer.duration) * width;
+        const fiEndX = ((baseStart + effFadeIn) / currentAudioBuffer.duration) * width;
+        const gradIn = ctx.createLinearGradient(fiStartX, 0, fiEndX, 0);
+        gradIn.addColorStop(0, 'rgba(16, 185, 129, 0.45)');
+        gradIn.addColorStop(1, 'rgba(16, 185, 129, 0.05)');
+        ctx.fillStyle = gradIn;
+        ctx.fillRect(fiStartX, 0, fiEndX - fiStartX, height);
+        
+        ctx.strokeStyle = 'rgba(16, 185, 129, 0.7)';
+        ctx.beginPath();
+        ctx.moveTo(fiStartX, height);
+        ctx.lineTo(fiEndX, 0);
+        ctx.stroke();
+      }
+
+      if (fadeOutSec > 0 && clipDuration > 0) {
+        const effFadeOut = Math.min(fadeOutSec, clipDuration);
+        const foStartX = ((baseEnd - effFadeOut) / currentAudioBuffer.duration) * width;
+        const foEndX = (baseEnd / currentAudioBuffer.duration) * width;
+        const gradOut = ctx.createLinearGradient(foStartX, 0, foEndX, 0);
+        gradOut.addColorStop(0, 'rgba(239, 68, 68, 0.05)');
+        gradOut.addColorStop(1, 'rgba(239, 68, 68, 0.45)');
+        ctx.fillStyle = gradOut;
+        ctx.fillRect(foStartX, 0, foEndX - foStartX, height);
+
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.7)';
+        ctx.beginPath();
+        ctx.moveTo(foStartX, 0);
+        ctx.lineTo(foEndX, height);
+        ctx.stroke();
       }
     }
 
@@ -2720,9 +2961,10 @@
       if (eqPresetSelect) eqPresetSelect.value = matchedKey;
     }
 
-    ['fxPitch', 'fxVol', 'fxSpeed'].forEach(id => {
+    ['fxPitch', 'fxVol', 'fxSpeed', 'fxFadeIn', 'fxFadeOut'].forEach(id => {
       const el = document.getElementById(id);
       const valEl = document.getElementById(id + 'Val');
+      if (!el || !valEl) return;
       el.addEventListener('input', () => {
         const t = i18n[currentLang];
         if (id === 'fxPitch') {
@@ -2744,6 +2986,9 @@
             const spd = parseFloat(el.value) || 1.0;
             fxAudioSource.playbackRate.setValueAtTime(spd * Math.pow(2, pt / 12), audioCtx.currentTime);
           }
+        } else if (id === 'fxFadeIn' || id === 'fxFadeOut') {
+          valEl.textContent = `${el.value}s`;
+          renderWaveform();
         }
       });
     });
@@ -2862,9 +3107,34 @@
         fxGainNode.connect(audioCtx.destination);
 
         let offset = trimRange.start || 0;
-        let duration = (trimRange.end > trimRange.start) ? (trimRange.end - trimRange.start) : undefined;
+        let rawDuration = (trimRange.end > trimRange.start) ? (trimRange.end - trimRange.start) : (currentAudioBuffer.duration - offset);
+        const rate = speed * Math.pow(2, pitch / 12);
+        let actualPlayDuration = rawDuration / rate;
 
-        fxAudioSource.start(0, offset, duration);
+        const fadeInSec = parseFloat(document.getElementById('fxFadeIn')?.value || '0');
+        const fadeOutSec = parseFloat(document.getElementById('fxFadeOut')?.value || '0');
+        const baseVol = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
+        const now = audioCtx.currentTime;
+
+        // フェードイン制御
+        if (fadeInSec > 0) {
+          fxGainNode.gain.setValueAtTime(0.0001, now);
+          const rampIn = Math.min(fadeInSec, actualPlayDuration);
+          fxGainNode.gain.linearRampToValueAtTime(baseVol, now + rampIn);
+        } else {
+          fxGainNode.gain.setValueAtTime(baseVol, now);
+        }
+
+        // フェードアウト制御
+        if (fadeOutSec > 0 && actualPlayDuration > fadeOutSec) {
+          const fadeOutStartTime = now + actualPlayDuration - fadeOutSec;
+          if (actualPlayDuration - fadeOutSec > fadeInSec) {
+            fxGainNode.gain.setValueAtTime(baseVol, fadeOutStartTime);
+          }
+          fxGainNode.gain.linearRampToValueAtTime(0.0001, now + actualPlayDuration);
+        }
+
+        fxAudioSource.start(0, offset, rawDuration);
         isPlayingFx = true;
         btnPreviewFx.textContent = t.btnPreviewStop || "停止";
 
@@ -2936,6 +3206,27 @@
           if (eq910 !== 0) afFilters.push(`equalizer=f=910:width_type=h:width=500:g=${eq910}`);
           if (eq4k !== 0) afFilters.push(`equalizer=f=4000:width_type=h:width=2000:g=${eq4k}`);
           if (eq14k !== 0) afFilters.push(`equalizer=f=14000:width_type=h:width=5000:g=${eq14k}`);
+
+          // フェードイン ＆ フェードアウト
+          const fxFadeIn = parseFloat(document.getElementById('fxFadeIn')?.value || '0');
+          const fxFadeOut = parseFloat(document.getElementById('fxFadeOut')?.value || '0');
+          if (fxFadeIn > 0) {
+            afFilters.push(`afade=t=in:ss=0:d=${fxFadeIn.toFixed(2)}`);
+          }
+          if (fxFadeOut > 0) {
+            let clipDuration = 0;
+            if (trimRange.end > trimRange.start) {
+              clipDuration = trimRange.end - trimRange.start;
+            } else if (currentAudioBuffer) {
+              clipDuration = currentAudioBuffer.duration;
+            }
+            if (clipDuration > fxFadeOut) {
+              const fadeOutStart = clipDuration - fxFadeOut;
+              afFilters.push(`afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fxFadeOut.toFixed(2)}`);
+            } else {
+              afFilters.push(`areverse,afade=t=in:ss=0:d=${fxFadeOut.toFixed(2)},areverse`);
+            }
+          }
 
           if (afFilters.length > 0) {
             args.push('-af', afFilters.join(','));
@@ -3086,20 +3377,46 @@
                 tokenResponse.error_description.includes('policy')
               )) || tokenResponse.error === 'idpiframe_initialization_failed' || tokenResponse.error === 'access_denied';
 
-              let errorHtml = `<p style="color:var(--danger-color); font-weight:600; margin-bottom: 8px;">${tokenResponse.error_description || tokenResponse.error}</p>`;
-              if (isOriginError) {
-                errorHtml += `
-                  <div style="font-size: 0.82rem; background: var(--item-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); text-align: left; line-height: 1.5;">
-                    <p style="margin-bottom: 6px; font-weight:600; color:var(--text-color);">${t.driveOriginHelpTitle || "【Google Cloud 設定の確認】"}</p>
-                    <p style="margin-bottom: 6px;">${t.driveOriginHelpDesc || "Google CloudコンソールのOAuth 2.0 クライアント設定にて、「承認済みの JavaScript 生成元」に現在のアプリURLを追加してください:"}</p>
-                    <code style="display:block; padding:6px 8px; background:var(--bg-color); border:1px solid var(--border-color); border-radius:4px; font-size:0.8rem; word-break:break-all; user-select:all; color:var(--accent-color);">${curOrigin}</code>
+              let errorHtml = `
+                <div style="font-size: 0.85rem; line-height: 1.6; text-align: left;">
+                  <p style="color:var(--danger-color); font-weight:600; margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--danger-color); flex-shrink:0;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                    <span>${tokenResponse.error_description || tokenResponse.error}</span>
+                  </p>
+                  <div style="background: var(--item-bg); padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 12px;">
+                    <p style="font-weight: 600; margin-bottom: 6px; color: var(--text-color);">【OAuth 2.0 クライアント設定の修正手順】</p>
+                    <ol style="margin: 0 0 10px 18px; padding: 0; font-size: 0.82rem; color: var(--text-sub); line-height: 1.5;">
+                      <li>下記のリンクから <strong>Google Cloud Console</strong> の「認証情報」画面を開きます。</li>
+                      <li>該当の OAuth 2.0 クライアント ID を選択します。</li>
+                      <li><strong>「承認済みの JavaScript 生成元」</strong>に以下の現在のURLを追加して保存します:</li>
+                    </ol>
+                    <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 10px;">
+                      <code id="errorModalOriginCode" style="flex: 1; padding: 6px 8px; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.8rem; word-break: break-all; user-select: all; color: var(--accent-color);">${curOrigin}</code>
+                      <button class="btn-sm" id="btnCopyOrigin" style="flex-shrink: 0; padding: 6px 10px; font-size: 0.75rem; cursor: pointer;">コピー</button>
+                    </div>
+                    <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener noreferrer" style="display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; color: var(--accent-color); font-weight: 600; text-decoration: underline;">
+                      <span>Google Cloud Console (認証情報) を直接開く</span>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                    </a>
                   </div>
-                `;
-              }
+                </div>
+              `;
+
               showCustomAlert(
                 t.driveAuthErrorTitle || "Google Drive 連携エラー",
                 errorHtml
               );
+
+              setTimeout(() => {
+                const btnCopy = document.getElementById('btnCopyOrigin');
+                if (btnCopy) {
+                  btnCopy.addEventListener('click', () => {
+                    navigator.clipboard.writeText(curOrigin);
+                    btnCopy.textContent = "コピー完了";
+                    setTimeout(() => { btnCopy.textContent = "コピー"; }, 2000);
+                  });
+                }
+              }, 100);
               return;
             }
             driveAccessToken = tokenResponse.access_token;
@@ -3114,6 +3431,11 @@
             }
           }
         });
+
+        // LocalStorageに保存された前回接続状態の自動確認・復元
+        if (driveAccessToken) {
+          checkAndUpdateDriveUser();
+        }
       } catch (e) {
         console.error("GIS init error:", e);
       }
@@ -3215,6 +3537,30 @@
       showToast(t.driveDisconnectedToast || "Google Driveの連携を解除しました");
     }
 
+    const SUPPORTED_VIDEO_EXTS = ['mp4', 'mov', 'webm', 'avi', 'mkv', 'flv', 'wmv'];
+    const SUPPORTED_AUDIO_EXTS = ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'];
+    const SUPPORTED_ALL_EXTS = [...SUPPORTED_VIDEO_EXTS, ...SUPPORTED_AUDIO_EXTS];
+
+    const driveExtFilterSelect = document.getElementById('driveExtFilterSelect');
+
+    function getDriveFileExtension(filename, mimeType = '') {
+      if (filename && filename.includes('.')) {
+        const ext = filename.split('.').pop().toLowerCase();
+        if (SUPPORTED_ALL_EXTS.includes(ext)) return ext;
+      }
+      if (mimeType) {
+        if (mimeType.includes('mp4')) return 'mp4';
+        if (mimeType.includes('webm')) return 'webm';
+        if (mimeType.includes('quicktime')) return 'mov';
+        if (mimeType.includes('mpeg') || mimeType.includes('mp3')) return 'mp3';
+        if (mimeType.includes('wav')) return 'wav';
+        if (mimeType.includes('ogg')) return 'ogg';
+        if (mimeType.includes('flac')) return 'flac';
+        if (mimeType.includes('aac')) return 'aac';
+      }
+      return '';
+    }
+
     function formatDriveFileSize(bytes) {
       if (!bytes || bytes === 0) return '0 B';
       const k = 1024;
@@ -3238,6 +3584,8 @@
         "name contains '.mov'",
         "name contains '.avi'",
         "name contains '.mkv'",
+        "name contains '.wmv'",
+        "name contains '.flv'",
         "name contains '.mp3'",
         "name contains '.wav'",
         "name contains '.m4a'",
@@ -3271,7 +3619,14 @@
         }
 
         const data = await res.json();
-        driveFilesList = data.files || [];
+        const rawFiles = data.files || [];
+
+        // アプリが対応している拡張子（SUPPORTED_ALL_EXTS）のみに厳密に絞り込み
+        driveFilesList = rawFiles.filter(file => {
+          const ext = getDriveFileExtension(file.name, file.mimeType);
+          return ext && SUPPORTED_ALL_EXTS.includes(ext);
+        });
+
         renderDriveFileList();
       } catch (err) {
         console.error("Fetch Drive files failed:", err);
@@ -3285,22 +3640,58 @@
       }
     }
 
+    function getFilteredDriveFiles() {
+      const selectedFilter = driveExtFilterSelect ? driveExtFilterSelect.value : 'all';
+      const searchText = driveSearchInput ? driveSearchInput.value.trim().toLowerCase() : '';
+
+      return driveFilesList.filter(file => {
+        const ext = getDriveFileExtension(file.name, file.mimeType);
+        if (!ext) return false;
+
+        // 検索ワードチェック
+        if (searchText && !file.name.toLowerCase().includes(searchText)) {
+          return false;
+        }
+
+        // 拡張子フィルターチェック
+        if (selectedFilter === 'all') return true;
+        if (selectedFilter === 'video_all') return SUPPORTED_VIDEO_EXTS.includes(ext);
+        if (selectedFilter === 'audio_all') return SUPPORTED_AUDIO_EXTS.includes(ext);
+        return ext === selectedFilter;
+      });
+    }
+
     function renderDriveFileList() {
       driveFileListContainer.innerHTML = '';
       const t = i18n[currentLang];
+      const visibleFiles = getFilteredDriveFiles();
 
-      if (!driveFilesList || driveFilesList.length === 0) {
+      if (!visibleFiles || visibleFiles.length === 0) {
         driveFileListContainer.innerHTML = `
-          <div style="padding: 30px; text-align: center; color: var(--text-sub); font-size: 0.85rem;">
-            ${t.driveEmpty || 'Google Drive内に対応メディアファイルが見つかりませんでした'}
+          <div style="padding: 32px 16px; text-align: center; color: var(--text-sub); font-size: 0.85rem;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 8px auto; opacity: 0.6; display: block;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <div>${t.driveEmpty || '指定された条件に一致する対応メディアファイルが見つかりませんでした'}</div>
           </div>
         `;
+        if (chkDriveSelectAll) chkDriveSelectAll.checked = false;
         return;
       }
 
-      driveFilesList.forEach(file => {
-        const isVideo = (file.mimeType && file.mimeType.startsWith('video/')) || /\.(mp4|mov|webm|avi|mkv|flv|wmv)$/i.test(file.name);
-        const icon = isVideo ? '🎬' : '🎵';
+      // 全選択チェックボックスの状態を可視アイテムに合わせて同期
+      if (chkDriveSelectAll) {
+        const allVisibleSelected = visibleFiles.every(f => driveSelectedFileIds.has(f.id));
+        chkDriveSelectAll.checked = allVisibleSelected && visibleFiles.length > 0;
+      }
+
+      visibleFiles.forEach(file => {
+        const ext = getDriveFileExtension(file.name, file.mimeType);
+        const isVideo = SUPPORTED_VIDEO_EXTS.includes(ext);
+
+        const iconSvg = isVideo 
+          ? `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-color); flex-shrink:0;"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M17 3v18"/><path d="M17 7.5h4"/><path d="M17 16.5h4"/></svg>`
+          : `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent-color); flex-shrink:0;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>`;
+
+        const badgeBg = isVideo ? 'background: rgba(2, 132, 199, 0.12); color: #0284c7;' : 'background: rgba(16, 185, 129, 0.12); color: #059669;';
         const sizeStr = formatDriveFileSize(file.size ? parseInt(file.size, 10) : 0);
         const dateStr = file.modifiedTime ? new Date(file.modifiedTime).toLocaleDateString() : '';
 
@@ -3308,9 +3699,12 @@
         el.className = 'drive-file-item' + (driveSelectedFileIds.has(file.id) ? ' selected' : '');
         el.innerHTML = `
           <input type="checkbox" style="cursor:pointer;" ${driveSelectedFileIds.has(file.id) ? 'checked' : ''}>
-          <span style="font-size:1.1rem;">${icon}</span>
+          <span style="display:inline-flex; align-items:center;">${iconSvg}</span>
           <div class="drive-file-info">
-            <div class="drive-file-name" title="${file.name}">${file.name}</div>
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span class="drive-file-name" title="${file.name}">${file.name}</span>
+              <span style="font-size: 0.68rem; font-weight: 700; padding: 1px 5px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.3px; ${badgeBg}">${ext}</span>
+            </div>
             <div class="drive-file-details">
               <span>${sizeStr}</span>
               <span>•</span>
@@ -3328,6 +3722,10 @@
           } else {
             driveSelectedFileIds.delete(file.id);
             el.classList.remove('selected');
+          }
+          if (chkDriveSelectAll) {
+            const allVisibleSelected = visibleFiles.every(f => driveSelectedFileIds.has(f.id));
+            chkDriveSelectAll.checked = allVisibleSelected && visibleFiles.length > 0;
           }
           updateDriveConfirmBtn();
         });
@@ -3372,8 +3770,14 @@
       driveSearchInput.addEventListener('input', () => {
         clearTimeout(driveSearchTimer);
         driveSearchTimer = setTimeout(() => {
-          fetchDriveFiles(driveSearchInput.value);
-        }, 400);
+          renderDriveFileList();
+        }, 250);
+      });
+    }
+
+    if (driveExtFilterSelect) {
+      driveExtFilterSelect.addEventListener('change', () => {
+        renderDriveFileList();
       });
     }
 
@@ -3384,9 +3788,11 @@
     if (chkDriveSelectAll) {
       chkDriveSelectAll.addEventListener('change', () => {
         const isChecked = chkDriveSelectAll.checked;
-        driveSelectedFileIds.clear();
+        const visibleFiles = getFilteredDriveFiles();
         if (isChecked) {
-          driveFilesList.forEach(f => driveSelectedFileIds.add(f.id));
+          visibleFiles.forEach(f => driveSelectedFileIds.add(f.id));
+        } else {
+          visibleFiles.forEach(f => driveSelectedFileIds.delete(f.id));
         }
         renderDriveFileList();
         updateDriveConfirmBtn();
@@ -3518,7 +3924,7 @@
         const t = i18n[currentLang];
         const origHtml = buttonEl.innerHTML;
         buttonEl.disabled = true;
-        buttonEl.innerHTML = `<span class="spinner" style="border-top-color:#fff; width:12px; height:12px;"></span> ☁️ ${t.driveUploading || '保存中...'}`;
+        buttonEl.innerHTML = `<span class="spinner" style="border-top-color:#fff; width:12px; height:12px;"></span> <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg> <span>${t.driveUploading || '保存中...'}</span>`;
 
         try {
           const mimeMap = {
@@ -3529,7 +3935,7 @@
           const mimeType = mimeMap[detectedExt.toLowerCase()] || 'application/octet-stream';
 
           const result = await uploadFileToDrive(displayTitle, mimeType, buf);
-          buttonEl.innerHTML = `${t.btnDriveSaved || '✓ Drive保存済'}`;
+          buttonEl.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;"><polyline points="20 6 9 17 4 12"/></svg> <span>${t.btnDriveSaved || 'Drive保存済'}</span>`;
           buttonEl.style.backgroundColor = '#10b981';
 
           if (result.webViewLink) {
@@ -3592,7 +3998,10 @@
           }
 
           saveAllToDriveBtn.disabled = false;
-          saveAllToDriveBtn.textContent = t.btnSaveAllToDrive || "☁️ Google Driveへ一括保存";
+          saveAllToDriveBtn.innerHTML = `
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="12 13 12 6 9 9"/><polyline points="12 6 15 9"/></svg>
+            <span id="saveAllToDriveBtnText">${t.btnSaveAllToDrive || "Google Driveへ一括保存"}</span>
+          `;
 
           const msg = (t.driveSaveAllSuccess || "全 {count} 件の変換済みファイルを Google Drive に保存しました").replace('{count}', successCount);
           showToast(msg);
@@ -3655,6 +4064,18 @@
       refreshAudioTargetSelect();
       restoreFormSettings();
       updateNotifBtnUI();
+
+      // オフライン/オンライン状態の自動監視
+      function updateNetworkStatus() {
+        if (!navigator.onLine) {
+          document.body.classList.add('is-offline');
+        } else {
+          document.body.classList.remove('is-offline');
+        }
+      }
+      window.addEventListener('online', updateNetworkStatus);
+      window.addEventListener('offline', updateNetworkStatus);
+      updateNetworkStatus();
     });
   </script>
 </body>
