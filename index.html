@@ -4,8 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Universal Media Converter Pro</title>
-  <meta name="description" content="ブラウザ内で安全・無制限に一括変換できる高機能メディア変換ツール。WebMからMP4への高速変換に対応。">
+  <meta name="description" content="サーバーにファイルを送信せず、ブラウザだけで安全・無制限に一括変換できる高機能メディア変換ツール。Google Driveクラウド連携、WebMからMP4への高速変換、リアルタイム進捗表示、オーディオ波形加工、メタタグ編集に対応。">
   
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
 
@@ -340,6 +341,36 @@
       color: #fcd34d;
     }
 
+    /* Google Drive スタイル */
+    .drive-file-item {
+      display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px;
+      border: 1px solid transparent; background-color: var(--card-bg); margin-bottom: 4px;
+      cursor: pointer; transition: background-color 0.15s, border-color 0.15s;
+    }
+    .drive-file-item:hover {
+      background-color: var(--card-sub-bg, #f8fafc);
+      border-color: var(--border-color);
+    }
+    .drive-file-item.selected {
+      background-color: rgba(2, 132, 199, 0.08);
+      border-color: #0284c7;
+    }
+    .drive-file-info {
+      flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;
+    }
+    .drive-file-name {
+      font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .drive-file-details {
+      font-size: 0.72rem; color: var(--text-sub); display: flex; gap: 8px;
+    }
+    .btn-drive-action {
+      background-color: #0284c7; color: #ffffff; border: none;
+    }
+    .btn-drive-action:hover {
+      background-color: #0369a1;
+    }
+
     @media (max-width: 600px) {
       .header-bar-grid { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto auto; }
       .header-col-left-1 { grid-column: 1; grid-row: 1; }
@@ -411,7 +442,17 @@
 
     <!-- 共通ファイルアップロードエリア -->
     <div class="card">
-      <label data-i18n="lblSelectConvertFiles">1. 処理するファイルの読み込み・追加:</label>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 6px;">
+        <label data-i18n="lblSelectConvertFiles" style="margin-bottom: 0;">1. 処理するファイルの読み込み・追加:</label>
+        <div id="driveAccountStatus" style="display: flex; align-items: center; gap: 6px; font-size: 0.78rem;">
+          <span id="driveStatusText" style="color: var(--text-sub); display: inline-flex; align-items: center; gap: 4px;">
+            <span style="display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #94a3b8;"></span>
+            <span data-i18n="driveDisconnected">Google Drive: 未接続</span>
+          </span>
+          <button id="btnDriveConnect" class="btn-sm" style="padding: 2px 8px; font-size: 0.72rem; cursor: pointer;" data-i18n="btnConnectDrive">連携</button>
+          <button id="btnDriveDisconnect" class="btn-sm" style="padding: 2px 8px; font-size: 0.72rem; cursor: pointer; display: none;" data-i18n="btnDisconnectDrive">解除</button>
+        </div>
+      </div>
       <div class="upload-options">
         <div class="upload-btn">
           <span data-i18n="btnFiles">ファイルを選択 (複数可)</span>
@@ -420,6 +461,9 @@
         <div class="upload-btn">
           <span data-i18n="btnFolders">フォルダを選択 (複数可)</span>
           <input type="file" id="folderInput" webkitdirectory directory multiple>
+        </div>
+        <div class="upload-btn" id="btnDrivePicker" style="background: #0284c7; color: #ffffff; border-color: #0284c7; cursor: pointer;">
+          <span data-i18n="btnDriveImport">☁️ Google Driveから読込</span>
         </div>
       </div>
 
@@ -698,9 +742,14 @@
 
       <div class="file-list" id="fileList"></div>
 
-      <button class="btn" id="downloadAllBtn" data-i18n="downloadAll" style="margin-top: 16px;" disabled>
-        変換済みファイルを一括ZIPダウンロード
-      </button>
+      <div style="display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap;">
+        <button class="btn" id="downloadAllBtn" data-i18n="downloadAll" style="flex: 1; min-width: 200px; margin-top: 0;" disabled>
+          変換済みファイルを一括ZIPダウンロード
+        </button>
+        <button class="btn btn-drive-action" id="saveAllToDriveBtn" data-i18n="btnSaveAllToDrive" style="flex: 1; min-width: 200px; margin-top: 0;" disabled>
+          ☁️ Google Driveへ一括保存
+        </button>
+      </div>
 
       <div class="card-footer">
         <button class="clear-link" id="clearListBtn" data-i18n="clearListBtn">リストを一括クリア</button>
@@ -821,6 +870,41 @@
       <div class="modal-body" id="customModalBody"></div>
       <div class="modal-footer">
         <button class="btn-sm btn-success" id="customModalOkBtn">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Google Drive 選択モーダル -->
+  <div class="modal-overlay" id="drivePickerModal" style="display: none;">
+    <div class="modal-box" style="max-width: 680px; width: 100%; max-height: 88vh;">
+      <div class="modal-header">
+        <div class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+          <span>☁️</span>
+          <span data-i18n="drivePickerTitle">Google Drive からメディアを選択</span>
+        </div>
+        <button class="modal-close" id="drivePickerClose">✕</button>
+      </div>
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <input type="text" id="driveSearchInput" placeholder="Drive内の動画・音声を検索..." data-i18n-placeholder="driveSearchPh" style="flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-color);">
+        <button class="btn-sm" id="btnDriveRefresh" title="更新" style="padding: 0 12px; cursor: pointer;">🔄 <span data-i18n="btnRefresh">更新</span></button>
+      </div>
+      <div id="driveUserNotice" style="display: none; font-size: 0.78rem; color: var(--text-sub); margin-bottom: 8px; padding: 6px 10px; background: var(--item-bg); border-radius: 6px;"></div>
+      <div id="driveLoadingIndicator" style="display: none; text-align: center; padding: 36px 10px; color: var(--text-sub);">
+        <div class="spinner" style="border-color: rgba(2, 132, 199, 0.3); border-top-color: #0284c7; width: 28px; height: 28px; margin: 0 auto 10px auto;"></div>
+        <div data-i18n="driveLoading">Google Driveからメディアを一覧取得中...</div>
+      </div>
+      <div id="driveFileListContainer" style="flex: 1; max-height: 380px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: var(--item-bg); padding: 6px;">
+        <!-- Drive file items rendered here -->
+      </div>
+      <div class="modal-footer" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.82rem; cursor: pointer; user-select: none;">
+          <input type="checkbox" id="chkDriveSelectAll">
+          <span data-i18n="driveSelectAll">すべて選択</span>
+        </label>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn-sm" id="btnDriveCancel" data-i18n="btnCancel">キャンセル</button>
+          <button class="btn-sm btn-drive-action" id="btnDriveConfirmImport" style="padding: 8px 16px; font-weight: 600;" disabled data-i18n="btnImportSelected">選択したファイルを読み込む (0)</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1021,7 +1105,32 @@
         lblWakeLockActive: "画面オフ防止・バックグラウンド維持",
         btnEnableNotif: "完了通知を有効化",
         notifPermitted: "通知: 許可済み",
-        restoredSession: "前回の作業セッションを復元しました"
+        restoredSession: "前回の作業セッションを復元しました",
+        driveDisconnected: "Google Drive: 未接続",
+        btnConnectDrive: "連携",
+        btnDisconnectDrive: "解除",
+        btnDriveImport: "☁️ Google Driveから読込",
+        btnSaveAllToDrive: "☁️ Google Driveへ一括保存",
+        btnDriveSave: "☁️ Drive",
+        btnDriveSaved: "✓ Drive保存済",
+        btnDriveView: "開く ↗",
+        drivePickerTitle: "Google Drive からメディアを選択",
+        driveSearchPh: "Drive内の動画・音声を検索...",
+        btnRefresh: "更新",
+        driveLoading: "Google Driveからメディアを一覧取得中...",
+        driveEmpty: "Google Drive内に対応メディアファイルが見つかりませんでした",
+        driveSelectAll: "すべて選択",
+        btnCancel: "キャンセル",
+        btnImportSelected: "選択したファイルを読み込む",
+        driveConnectedToast: "Google Driveと連携しました",
+        driveDisconnectedToast: "Google Driveの連携を解除しました",
+        driveImportSuccess: "{count} 件のメディアファイルを Google Drive から読み込みました",
+        driveSaveSuccess: "「{name}」を Google Drive の \"Universal Media Converter\" フォルダに保存しました",
+        driveSaveAllSuccess: "全 {count} 件の変換済みファイルを Google Drive に保存しました",
+        driveUploading: "Google Driveへ保存中...",
+        driveSavingAll: "Google Driveへ保存中 ({current}/{total})...",
+        driveAuthErrorTitle: "Google Drive 連携エラー",
+        driveGisNotLoaded: "Google連携ライブラリの読み込み中です。少し待って再試行してください。"
       },
       en: {
         pageTitle: "Universal Media Converter Pro",
@@ -1215,7 +1324,32 @@
         lblWakeLockActive: "Screen Keep-Alive & Background Execution",
         btnEnableNotif: "Enable Notifications",
         notifPermitted: "Notifications: Enabled",
-        restoredSession: "Previous working session restored"
+        restoredSession: "Previous working session restored",
+        driveDisconnected: "Google Drive: Disconnected",
+        btnConnectDrive: "Connect",
+        btnDisconnectDrive: "Disconnect",
+        btnDriveImport: "☁️ Google Drive Import",
+        btnSaveAllToDrive: "☁️ Save All to Google Drive",
+        btnDriveSave: "☁️ Drive",
+        btnDriveSaved: "✓ Saved to Drive",
+        btnDriveView: "Open ↗",
+        drivePickerTitle: "Select Media from Google Drive",
+        driveSearchPh: "Search videos & audios in Drive...",
+        btnRefresh: "Refresh",
+        driveLoading: "Fetching media list from Google Drive...",
+        driveEmpty: "No matching media files found in Google Drive",
+        driveSelectAll: "Select All",
+        btnCancel: "Cancel",
+        btnImportSelected: "Import Selected Files",
+        driveConnectedToast: "Connected to Google Drive",
+        driveDisconnectedToast: "Disconnected from Google Drive",
+        driveImportSuccess: "Imported {count} media file(s) from Google Drive",
+        driveSaveSuccess: "Saved \"{name}\" to Google Drive \"Universal Media Converter\" folder",
+        driveSaveAllSuccess: "Saved all {count} file(s) to Google Drive",
+        driveUploading: "Saving to Google Drive...",
+        driveSavingAll: "Saving to Google Drive ({current}/{total})...",
+        driveAuthErrorTitle: "Google Drive Error",
+        driveGisNotLoaded: "Google Identity library is initializing. Please retry in a moment."
       }
     };
 
@@ -1940,6 +2074,7 @@
               <button class="btn-sm btn-audio-fx">音声加工</button>
               <button class="btn-sm btn-edit-meta">タグ編集</button>
               <button class="btn-sm btn-success btn-dl" ${isConverted ? '' : 'disabled'}>保存</button>
+              <button class="btn-sm btn-drive" style="${isConverted ? '' : 'display:none;'} background:#0284c7; color:#fff; border:none; padding:4px 8px; font-weight:500;" title="Google Driveに保存">☁️ Drive</button>
               <button class="btn-sm btn-danger btn-remove">削除</button>
             </div>
           </div>
@@ -2010,6 +2145,23 @@
           URL.revokeObjectURL(url);
         });
 
+        // Google Drive への単体保存ハンドラー
+        const driveBtn = item.querySelector('.btn-drive');
+        if (driveBtn) {
+          driveBtn.addEventListener('click', async () => {
+            let buf = dataBuffer;
+            if (!buf) {
+              const saved = await getSavedFiles();
+              const f = saved.find(s => s.id === id);
+              if (f) buf = f.data;
+            }
+            if (!buf) return;
+            if (typeof handleSaveSingleFileToDrive === 'function') {
+              await handleSaveSingleFileToDrive(displayTitle, detectedExt, buf, driveBtn);
+            }
+          });
+        }
+
         item.querySelector('.btn-audio-fx').addEventListener('click', () => {
           switchTab('audio');
           audioTargetSelect.value = id;
@@ -2037,11 +2189,18 @@
           const remainingPending = await getSavedPendingFiles();
           if (remaining.length === 0 && remainingPending.length === 0) {
             downloadAllBtn.disabled = true;
+            const driveAllBtn = document.getElementById('saveAllToDriveBtn');
+            if (driveAllBtn) driveAllBtn.disabled = true;
             startConversionBtn.disabled = true;
             updateProgress(0, i18n[currentLang].statusIdle || '待機中');
             counterLabel.textContent = '0 / 0';
           } else if (remainingPending.length === 0) {
             startConversionBtn.disabled = true;
+          }
+          if (remaining.length === 0) {
+            downloadAllBtn.disabled = true;
+            const driveAllBtn = document.getElementById('saveAllToDriveBtn');
+            if (driveAllBtn) driveAllBtn.disabled = true;
           }
         });
       }
@@ -2284,6 +2443,8 @@
 
         updateProgress(100, i18n[currentLang].msgAllConverted || "全ての変換が正常に完了しました！");
         downloadAllBtn.disabled = false;
+        const driveAllBtn = document.getElementById('saveAllToDriveBtn');
+        if (driveAllBtn) driveAllBtn.disabled = false;
         showToast(i18n[currentLang].msgConversionDone || "変換が完了しました！");
 
         // タブ切り替え者・バックグラウンド待機者への通知 & チャイム音
@@ -2341,6 +2502,8 @@
       refreshMetaTargetSelect();
       refreshAudioTargetSelect();
       downloadAllBtn.disabled = true;
+      const driveAllBtn = document.getElementById('saveAllToDriveBtn');
+      if (driveAllBtn) driveAllBtn.disabled = true;
       startConversionBtn.disabled = true;
       updateProgress(0, i18n[currentLang].statusIdle || '待機中');
       counterLabel.textContent = '0 / 0';
@@ -2857,6 +3020,556 @@
       });
     }
 
+    // ==========================================
+    // Google Drive クラウド連携モジュール
+    // ==========================================
+    let gdriveClientId = "682605255020-1lc016je2t1lsacm1i4tr5247q3rfi0t.apps.googleusercontent.com";
+    fetch('/firebase-applet-config.json')
+      .then(r => r.json())
+      .then(cfg => { if (cfg && cfg.oAuthClientId) gdriveClientId = cfg.oAuthClientId; })
+      .catch(() => {});
+
+    let tokenClient = null;
+    let driveAccessToken = localStorage.getItem('gdrive_access_token') || null;
+    let driveUserInfo = null;
+    let pendingDriveAction = null;
+    let appFolderId = null;
+
+    const drivePickerModal = document.getElementById('drivePickerModal');
+    const drivePickerClose = document.getElementById('drivePickerClose');
+    const driveSearchInput = document.getElementById('driveSearchInput');
+    const btnDriveRefresh = document.getElementById('btnDriveRefresh');
+    const driveLoadingIndicator = document.getElementById('driveLoadingIndicator');
+    const driveFileListContainer = document.getElementById('driveFileListContainer');
+    const chkDriveSelectAll = document.getElementById('chkDriveSelectAll');
+    const btnDriveCancel = document.getElementById('btnDriveCancel');
+    const btnDriveConfirmImport = document.getElementById('btnDriveConfirmImport');
+    const btnDrivePicker = document.getElementById('btnDrivePicker');
+    const btnDriveConnect = document.getElementById('btnDriveConnect');
+    const btnDriveDisconnect = document.getElementById('btnDriveDisconnect');
+    const saveAllToDriveBtn = document.getElementById('saveAllToDriveBtn');
+
+    let driveFilesList = [];
+    let driveSelectedFileIds = new Set();
+
+    function initGis() {
+      if (!window.google?.accounts?.oauth2) {
+        setTimeout(initGis, 600);
+        return;
+      }
+      try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+          client_id: gdriveClientId,
+          scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly',
+          callback: async (tokenResponse) => {
+            if (tokenResponse.error) {
+              console.error("GIS OAuth Error:", tokenResponse);
+              const t = i18n[currentLang];
+              showCustomAlert(
+                t.driveAuthErrorTitle || "Google Drive 連携エラー",
+                `<p style="color:var(--danger-color); font-weight:600;">${tokenResponse.error_description || tokenResponse.error}</p>`
+              );
+              return;
+            }
+            driveAccessToken = tokenResponse.access_token;
+            localStorage.setItem('gdrive_access_token', driveAccessToken);
+            const t = i18n[currentLang];
+            showToast(t.driveConnectedToast || "Google Driveと連携しました");
+            await checkAndUpdateDriveUser();
+            if (pendingDriveAction) {
+              const cb = pendingDriveAction;
+              pendingDriveAction = null;
+              cb();
+            }
+          }
+        });
+      } catch (e) {
+        console.error("GIS init error:", e);
+      }
+    }
+
+    async function checkAndUpdateDriveUser() {
+      if (!driveAccessToken) {
+        updateDriveStatusUI();
+        return;
+      }
+      try {
+        const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
+          headers: { Authorization: `Bearer ${driveAccessToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          driveUserInfo = data.user;
+        } else {
+          driveAccessToken = null;
+          driveUserInfo = null;
+          localStorage.removeItem('gdrive_access_token');
+        }
+      } catch (e) {
+        console.warn("Drive about check failed:", e);
+      }
+      updateDriveStatusUI();
+    }
+
+    function updateDriveStatusUI() {
+      const statusText = document.getElementById('driveStatusText');
+      const btnConn = document.getElementById('btnDriveConnect');
+      const btnDisconn = document.getElementById('btnDriveDisconnect');
+      const t = i18n[currentLang];
+      if (!statusText || !btnConn || !btnDisconn) return;
+
+      if (driveAccessToken && driveUserInfo) {
+        statusText.innerHTML = `
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#10b981;"></span>
+          <span>Drive: <strong style="color:var(--text-color);">${driveUserInfo.displayName || driveUserInfo.emailAddress}</strong></span>
+        `;
+        btnConn.style.display = 'none';
+        btnDisconn.style.display = 'inline-block';
+      } else {
+        statusText.innerHTML = `
+          <span style="display:inline-block; width:7px; height:7px; border-radius:50%; background:#94a3b8;"></span>
+          <span>${t.driveDisconnected || 'Google Drive: 未接続'}</span>
+        `;
+        btnConn.style.display = 'inline-block';
+        btnDisconn.style.display = 'none';
+      }
+    }
+
+    function ensureDriveToken(actionCallback) {
+      pendingDriveAction = actionCallback;
+      if (!tokenClient) initGis();
+
+      if (driveAccessToken && driveUserInfo) {
+        pendingDriveAction = null;
+        if (actionCallback) actionCallback();
+        return;
+      }
+
+      if (driveAccessToken) {
+        checkAndUpdateDriveUser().then(() => {
+          if (driveAccessToken && driveUserInfo) {
+            pendingDriveAction = null;
+            if (actionCallback) actionCallback();
+          } else {
+            requestDriveToken();
+          }
+        });
+        return;
+      }
+
+      requestDriveToken();
+    }
+
+    function requestDriveToken() {
+      if (!tokenClient) {
+        const t = i18n[currentLang];
+        showToast(t.driveGisNotLoaded || "Google連携ライブラリの読み込み中です。少し待って再試行してください。");
+        initGis();
+        return;
+      }
+      tokenClient.requestAccessToken({ prompt: '' });
+    }
+
+    function disconnectDrive() {
+      if (driveAccessToken && window.google?.accounts?.oauth2?.revoke) {
+        try {
+          google.accounts.oauth2.revoke(driveAccessToken, () => {});
+        } catch(e) {}
+      }
+      driveAccessToken = null;
+      driveUserInfo = null;
+      localStorage.removeItem('gdrive_access_token');
+      updateDriveStatusUI();
+      const t = i18n[currentLang];
+      showToast(t.driveDisconnectedToast || "Google Driveの連携を解除しました");
+    }
+
+    function formatDriveFileSize(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+    }
+
+    async function fetchDriveFiles(query = '') {
+      driveLoadingIndicator.style.display = 'block';
+      driveFileListContainer.innerHTML = '';
+      driveSelectedFileIds.clear();
+      updateDriveConfirmBtn();
+      if (chkDriveSelectAll) chkDriveSelectAll.checked = false;
+
+      const mimeFilters = [
+        "mimeType contains 'video/'",
+        "mimeType contains 'audio/'",
+        "name contains '.mp4'",
+        "name contains '.webm'",
+        "name contains '.mov'",
+        "name contains '.avi'",
+        "name contains '.mkv'",
+        "name contains '.mp3'",
+        "name contains '.wav'",
+        "name contains '.m4a'",
+        "name contains '.aac'",
+        "name contains '.ogg'",
+        "name contains '.flac'"
+      ].join(" or ");
+
+      let q = `trashed = false and (${mimeFilters})`;
+      if (query && query.trim()) {
+        const safeQ = query.trim().replace(/'/g, "\\'");
+        q = `trashed = false and name contains '${safeQ}' and (${mimeFilters})`;
+      }
+
+      try {
+        const url = `https://www.googleapis.com/drive/v3/files?pageSize=100&fields=nextPageToken,files(id,name,mimeType,size,modifiedTime,iconLink)&q=${encodeURIComponent(q)}&orderBy=modifiedTime desc`;
+        const res = await fetch(url, {
+          headers: { Authorization: `Bearer ${driveAccessToken}` }
+        });
+
+        if (!res.ok) {
+          if (res.status === 401) {
+            driveAccessToken = null;
+            localStorage.removeItem('gdrive_access_token');
+            updateDriveStatusUI();
+            driveLoadingIndicator.style.display = 'none';
+            ensureDriveToken(() => fetchDriveFiles(query));
+            return;
+          }
+          throw new Error(`Drive API error: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        driveFilesList = data.files || [];
+        renderDriveFileList();
+      } catch (err) {
+        console.error("Fetch Drive files failed:", err);
+        driveFileListContainer.innerHTML = `
+          <div style="padding: 24px; text-align: center; color: var(--danger-color); font-size: 0.85rem;">
+            ファイルの取得に失敗しました: ${err.message}
+          </div>
+        `;
+      } finally {
+        driveLoadingIndicator.style.display = 'none';
+      }
+    }
+
+    function renderDriveFileList() {
+      driveFileListContainer.innerHTML = '';
+      const t = i18n[currentLang];
+
+      if (!driveFilesList || driveFilesList.length === 0) {
+        driveFileListContainer.innerHTML = `
+          <div style="padding: 30px; text-align: center; color: var(--text-sub); font-size: 0.85rem;">
+            ${t.driveEmpty || 'Google Drive内に対応メディアファイルが見つかりませんでした'}
+          </div>
+        `;
+        return;
+      }
+
+      driveFilesList.forEach(file => {
+        const isVideo = (file.mimeType && file.mimeType.startsWith('video/')) || /\.(mp4|mov|webm|avi|mkv|flv|wmv)$/i.test(file.name);
+        const icon = isVideo ? '🎬' : '🎵';
+        const sizeStr = formatDriveFileSize(file.size ? parseInt(file.size, 10) : 0);
+        const dateStr = file.modifiedTime ? new Date(file.modifiedTime).toLocaleDateString() : '';
+
+        const el = document.createElement('div');
+        el.className = 'drive-file-item' + (driveSelectedFileIds.has(file.id) ? ' selected' : '');
+        el.innerHTML = `
+          <input type="checkbox" style="cursor:pointer;" ${driveSelectedFileIds.has(file.id) ? 'checked' : ''}>
+          <span style="font-size:1.1rem;">${icon}</span>
+          <div class="drive-file-info">
+            <div class="drive-file-name" title="${file.name}">${file.name}</div>
+            <div class="drive-file-details">
+              <span>${sizeStr}</span>
+              <span>•</span>
+              <span>${dateStr}</span>
+            </div>
+          </div>
+        `;
+
+        const chk = el.querySelector('input[type="checkbox"]');
+        el.addEventListener('click', (e) => {
+          if (e.target !== chk) chk.checked = !chk.checked;
+          if (chk.checked) {
+            driveSelectedFileIds.add(file.id);
+            el.classList.add('selected');
+          } else {
+            driveSelectedFileIds.delete(file.id);
+            el.classList.remove('selected');
+          }
+          updateDriveConfirmBtn();
+        });
+
+        driveFileListContainer.appendChild(el);
+      });
+    }
+
+    function updateDriveConfirmBtn() {
+      const count = driveSelectedFileIds.size;
+      const t = i18n[currentLang];
+      if (btnDriveConfirmImport) {
+        btnDriveConfirmImport.disabled = count === 0;
+        btnDriveConfirmImport.textContent = `${t.btnImportSelected || '選択したファイルを読み込む'} (${count})`;
+      }
+    }
+
+    function openDrivePicker() {
+      ensureDriveToken(() => {
+        drivePickerModal.style.display = 'flex';
+        const noticeEl = document.getElementById('driveUserNotice');
+        if (driveUserInfo && noticeEl) {
+          noticeEl.style.display = 'block';
+          noticeEl.innerHTML = `ログイン中: <strong>${driveUserInfo.displayName || driveUserInfo.emailAddress}</strong>`;
+        }
+        fetchDriveFiles(driveSearchInput ? driveSearchInput.value : '');
+      });
+    }
+
+    function closeDrivePicker() {
+      drivePickerModal.style.display = 'none';
+    }
+
+    if (btnDrivePicker) btnDrivePicker.addEventListener('click', openDrivePicker);
+    if (btnDriveConnect) btnDriveConnect.addEventListener('click', () => ensureDriveToken(() => {}));
+    if (btnDriveDisconnect) btnDriveDisconnect.addEventListener('click', disconnectDrive);
+    if (drivePickerClose) drivePickerClose.addEventListener('click', closeDrivePicker);
+    if (btnDriveCancel) btnDriveCancel.addEventListener('click', closeDrivePicker);
+
+    let driveSearchTimer = null;
+    if (driveSearchInput) {
+      driveSearchInput.addEventListener('input', () => {
+        clearTimeout(driveSearchTimer);
+        driveSearchTimer = setTimeout(() => {
+          fetchDriveFiles(driveSearchInput.value);
+        }, 400);
+      });
+    }
+
+    if (btnDriveRefresh) {
+      btnDriveRefresh.addEventListener('click', () => fetchDriveFiles(driveSearchInput ? driveSearchInput.value : ''));
+    }
+
+    if (chkDriveSelectAll) {
+      chkDriveSelectAll.addEventListener('change', () => {
+        const isChecked = chkDriveSelectAll.checked;
+        driveSelectedFileIds.clear();
+        if (isChecked) {
+          driveFilesList.forEach(f => driveSelectedFileIds.add(f.id));
+        }
+        renderDriveFileList();
+        updateDriveConfirmBtn();
+      });
+    }
+
+    if (btnDriveConfirmImport) {
+      btnDriveConfirmImport.addEventListener('click', async () => {
+        const t = i18n[currentLang];
+        const selectedIds = Array.from(driveSelectedFileIds);
+        if (selectedIds.length === 0) return;
+
+        btnDriveConfirmImport.disabled = true;
+        const selectedFiles = driveFilesList.filter(f => selectedIds.includes(f.id));
+        const downloadedFiles = [];
+
+        for (let i = 0; i < selectedFiles.length; i++) {
+          const fileMeta = selectedFiles[i];
+          btnDriveConfirmImport.textContent = `ダウンロード中 (${i + 1}/${selectedFiles.length})...`;
+          try {
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileMeta.id}?alt=media`, {
+              headers: { Authorization: `Bearer ${driveAccessToken}` }
+            });
+            if (!res.ok) throw new Error(`Status ${res.status}`);
+            const blob = await res.blob();
+            const fileObj = new File([blob], fileMeta.name, { type: fileMeta.mimeType || 'application/octet-stream' });
+            downloadedFiles.push(fileObj);
+          } catch (err) {
+            console.error(`Download ${fileMeta.name} failed:`, err);
+            showToast(`「${fileMeta.name}」の読み込みに失敗しました`);
+          }
+        }
+
+        closeDrivePicker();
+        btnDriveConfirmImport.disabled = false;
+        updateDriveConfirmBtn();
+
+        if (downloadedFiles.length > 0) {
+          await handleFileSelection(downloadedFiles);
+          const msg = (t.driveImportSuccess || "{count} 件のメディアファイルを Google Drive から読み込みました").replace('{count}', downloadedFiles.length);
+          showToast(msg);
+        }
+      });
+    }
+
+    async function getOrCreateAppFolder() {
+      if (appFolderId) return appFolderId;
+      try {
+        const q = "name = 'Universal Media Converter' and mimeType = 'application/vnd.google-apps.folder' and trashed = false";
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name)`, {
+          headers: { Authorization: `Bearer ${driveAccessToken}` }
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.files && data.files.length > 0) {
+            appFolderId = data.files[0].id;
+            return appFolderId;
+          }
+        }
+
+        const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${driveAccessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            name: 'Universal Media Converter',
+            mimeType: 'application/vnd.google-apps.folder'
+          })
+        });
+        if (createRes.ok) {
+          const created = await createRes.json();
+          appFolderId = created.id;
+          return appFolderId;
+        }
+      } catch (e) {
+        console.warn("Folder check/create failed:", e);
+      }
+      return null;
+    }
+
+    async function uploadFileToDrive(fileName, mimeType, uint8ArrayData) {
+      const folderId = await getOrCreateAppFolder();
+      const metadata = {
+        name: fileName,
+        mimeType: mimeType
+      };
+      if (folderId) {
+        metadata.parents = [folderId];
+      }
+
+      const boundary = '-------314159265358979323846';
+      const delimiter = "\r\n--" + boundary + "\r\n";
+      const closeDelim = "\r\n--" + boundary + "--";
+
+      const metaPart = delimiter +
+        'Content-Type: application/json; charset=UTF-8\r\n\r\n' +
+        JSON.stringify(metadata);
+
+      const filePartHeader = delimiter +
+        `Content-Type: ${mimeType}\r\n\r\n`;
+
+      const metaBlob = new Blob([metaPart]);
+      const fileHeaderBlob = new Blob([filePartHeader]);
+      const dataBlob = new Blob([uint8ArrayData]);
+      const closeBlob = new Blob([closeDelim]);
+
+      const multipartBody = new Blob([metaBlob, fileHeaderBlob, dataBlob, closeBlob]);
+
+      const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,name,webViewLink', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${driveAccessToken}`,
+          'Content-Type': `multipart/related; boundary=${boundary}`
+        },
+        body: multipartBody
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error(`Drive upload failed: ${uploadRes.status} ${uploadRes.statusText}`);
+      }
+
+      return await uploadRes.json();
+    }
+
+    async function handleSaveSingleFileToDrive(displayTitle, detectedExt, buf, buttonEl) {
+      ensureDriveToken(async () => {
+        const t = i18n[currentLang];
+        const origHtml = buttonEl.innerHTML;
+        buttonEl.disabled = true;
+        buttonEl.innerHTML = `<span class="spinner" style="border-top-color:#fff; width:12px; height:12px;"></span> ☁️ ${t.driveUploading || '保存中...'}`;
+
+        try {
+          const mimeMap = {
+            mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+            mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg',
+            m4a: 'audio/mp4', aac: 'audio/aac', flac: 'audio/flac'
+          };
+          const mimeType = mimeMap[detectedExt.toLowerCase()] || 'application/octet-stream';
+
+          const result = await uploadFileToDrive(displayTitle, mimeType, buf);
+          buttonEl.innerHTML = `${t.btnDriveSaved || '✓ Drive保存済'}`;
+          buttonEl.style.backgroundColor = '#10b981';
+
+          if (result.webViewLink) {
+            const link = document.createElement('a');
+            link.href = result.webViewLink;
+            link.target = '_blank';
+            link.rel = 'noopener noreferrer';
+            link.style.fontSize = '0.72rem';
+            link.style.color = '#0284c7';
+            link.style.textDecoration = 'underline';
+            link.textContent = `[${t.btnDriveView || '開く ↗'}]`;
+            buttonEl.parentNode.insertBefore(link, buttonEl.nextSibling);
+          }
+
+          const msg = (t.driveSaveSuccess || "「{name}」を Google Drive の \"Universal Media Converter\" フォルダに保存しました").replace('{name}', displayTitle);
+          showToast(msg);
+        } catch (e) {
+          console.error("Single save to drive error:", e);
+          showCustomAlert("Drive保存エラー", "Google Driveへの保存に失敗しました: " + e.message);
+          buttonEl.innerHTML = origHtml;
+          buttonEl.disabled = false;
+        }
+      });
+    }
+
+    if (saveAllToDriveBtn) {
+      saveAllToDriveBtn.addEventListener('click', async () => {
+        ensureDriveToken(async () => {
+          const t = i18n[currentLang];
+          const saved = await getSavedFiles();
+          if (saved.length === 0) {
+            showToast("保存可能な変換済みファイルがありません");
+            return;
+          }
+
+          saveAllToDriveBtn.disabled = true;
+          const total = saved.length;
+          let successCount = 0;
+
+          for (let i = 0; i < total; i++) {
+            const item = saved[i];
+            const statusMsg = (t.driveSavingAll || "Google Driveへ保存中 ({current}/{total})...")
+              .replace('{current}', i + 1)
+              .replace('{total}', total);
+            saveAllToDriveBtn.innerHTML = `<span class="spinner" style="border-top-color:#fff; width:12px; height:12px;"></span> ${statusMsg}`;
+
+            try {
+              const ext = item.inputExt ? item.inputExt.toLowerCase() : 'mp4';
+              const mimeMap = {
+                mp4: 'video/mp4', webm: 'video/webm', mov: 'video/quicktime',
+                mp3: 'audio/mpeg', wav: 'audio/wav', ogg: 'audio/ogg',
+                m4a: 'audio/mp4', aac: 'audio/aac', flac: 'audio/flac'
+              };
+              const mimeType = mimeMap[ext] || 'application/octet-stream';
+              await uploadFileToDrive(item.fileName, mimeType, item.data);
+              successCount++;
+            } catch (err) {
+              console.error(`Save to drive failed for ${item.fileName}:`, err);
+            }
+          }
+
+          saveAllToDriveBtn.disabled = false;
+          saveAllToDriveBtn.textContent = t.btnSaveAllToDrive || "☁️ Google Driveへ一括保存";
+
+          const msg = (t.driveSaveAllSuccess || "全 {count} 件の変換済みファイルを Google Drive に保存しました").replace('{count}', successCount);
+          showToast(msg);
+          notifyCompletion("Google Drive 保存完了", msg);
+        });
+      });
+    }
+
     // 初期起動
     window.addEventListener('DOMContentLoaded', async () => {
       const savedLang = localStorage.getItem('user_lang') || 'ja';
@@ -2871,6 +3584,10 @@
 
       await initDB();
 
+      // Google Drive 初期化 & 認証状態チェック
+      initGis();
+      checkAndUpdateDriveUser();
+
       // バックグラウンドでFFmpeg初期化開始
       initFFmpeg().catch(e => console.log("FFmpeg lazy init:", e));
 
@@ -2879,6 +3596,7 @@
       if (saved.length > 0) {
         saved.forEach(s => createFileItemUI(s.id, s.fileName, s.inputExt, true, s.data));
         downloadAllBtn.disabled = false;
+        if (saveAllToDriveBtn) saveAllToDriveBtn.disabled = false;
       }
 
       // 未処理（処理待ち）ファイルの復元（タブを閉じても続きから作業可能）
