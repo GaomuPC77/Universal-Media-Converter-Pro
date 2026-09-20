@@ -37,6 +37,7 @@
     .offline-indicator { display: none; }
 
     /* オフライン状態およびオフラインパック版では Google Drive 機能を完全に非表示 */
+    body.is-offline-edition #btnDownloadAppPack,
     body.is-offline-edition #driveAccountStatus,
     body.is-offline-edition #btnDrivePicker,
     body.is-offline-edition #saveAllToDriveBtn,
@@ -1687,6 +1688,10 @@
     const batchScriptContent = `@start converter_core.html`;
 
     document.getElementById('btnDownloadAppPack')?.addEventListener('click', async () => {
+      if (document.body.classList.contains('is-offline-edition') || document.getElementById('embedded-ffmpeg-core')) {
+        showToast("すでにオフライン版（スタンドアロン）で動作しています");
+        return;
+      }
       const btn = document.getElementById('btnDownloadAppPack');
       const origHtml = btn ? btn.innerHTML : '';
       try {
@@ -1695,7 +1700,7 @@
           btn.disabled = true;
           btn.innerHTML = `
             <span class="spinner" style="width:12px; height:12px; border-width:2px; border-top-color:currentColor;"></span>
-            <span>パック生成中...</span>
+            <span>ライブラリ取得中...</span>
           `;
         }
 
@@ -1705,6 +1710,17 @@
           fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.js'),
           fetch('https://unpkg.com/@ffmpeg/core-st@0.11.1/dist/ffmpeg-core.wasm')
         ]);
+
+        if (!jszipRes.ok || !ffmpegRes.ok || !coreRes.ok || !wasmRes.ok) {
+          throw new Error("外部ライブラリのダウンロードに失敗しました。ネットワーク接続を確認してください。");
+        }
+
+        if (btn) {
+          btn.innerHTML = `
+            <span class="spinner" style="width:12px; height:12px; border-width:2px; border-top-color:currentColor;"></span>
+            <span>パック構築中...</span>
+          `;
+        }
 
         const jszipCode = await jszipRes.text();
         const ffmpegCode = await ffmpegRes.text();
@@ -1720,27 +1736,46 @@
         }
         wasmBase64 = btoa(wasmBase64);
 
+        // 出力用HTMLの取得前にボタン表示を元に戻し、オフライン版クラスを付与
+        if (btn) {
+          btn.innerHTML = origHtml;
+          btn.disabled = false;
+        }
         document.body.classList.add('is-offline-edition');
         let htmlContent = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
         document.body.classList.remove('is-offline-edition');
 
-        // 外部スクリプトタグをインラインコードに置換
-        htmlContent = htmlContent.replace(
-          /<script src="https:\/\/cdnjs\.cloudflare\.com\/ajax\/libs\/jszip\/3\.10\.1\/jszip\.min\.js"><\/script>/,
-          `<script>${jszipCode}<\/script>`
-        );
-        htmlContent = htmlContent.replace(
-          /<script src="https:\/\/unpkg\.com\/@ffmpeg\/ffmpeg@0\.11\.6\/dist\/ffmpeg\.min\.js"><\/script>/,
-          `<script>${ffmpegCode}<\/script>`
-        );
-        htmlContent = htmlContent.replace(
-          /<script src="https:\/\/accounts\.google\.com\/gsi\/client" async defer><\/script>/,
-          ''
-        );
+        const cleanJszip = jszipCode.replace(/<\/script>/gi, '<\\/script>');
+        const cleanFfmpeg = ffmpegCode.replace(/<\/script>/gi, '<\\/script>');
+        const cleanCore = coreCode.replace(/<\/script>/gi, '<\\/script>');
+
+        // 外部スクリプトタグを柔軟な正規表現でインラインコードに置換
+        let replacedJszip = false;
+        let replacedFfmpeg = false;
+
+        htmlContent = htmlContent.replace(/<script\b[^>]*\bjszip(?:\.min)?\.js[^>]*><\/script>/gi, () => {
+          replacedJszip = true;
+          return `<script>${cleanJszip}<\/script>`;
+        });
+        htmlContent = htmlContent.replace(/<script\b[^>]*\bffmpeg(?:\.min)?\.js[^>]*><\/script>/gi, () => {
+          replacedFfmpeg = true;
+          return `<script>${cleanFfmpeg}<\/script>`;
+        });
+        htmlContent = htmlContent.replace(/<script\b[^>]*accounts\.google\.com\/gsi\/client[^>]*><\/script>/gi, '');
+
+        // 万が一置換マッチしなかった場合でも確実に<head>に注入
+        const fallbackInlines = [];
+        if (!replacedJszip) {
+          fallbackInlines.push(`<script>${cleanJszip}<\/script>`);
+        }
+        if (!replacedFfmpeg) {
+          fallbackInlines.push(`<script>${cleanFfmpeg}<\/script>`);
+        }
 
         // CoreとWASMをプレーンテキスト/Base64スクリプトとしてHTMLに埋め込み
         const embeddedScripts = `
-  <script id="embedded-ffmpeg-core" type="text/plain">${coreCode.replace(/<\/script>/gi, '<\\/script>')}<\/script>
+  ${fallbackInlines.join('\n  ')}
+  <script id="embedded-ffmpeg-core" type="text/plain">${cleanCore}<\/script>
   <script id="embedded-ffmpeg-wasm" type="text/plain">${wasmBase64}<\/script>
 `;
         htmlContent = htmlContent.replace('</head>', `${embeddedScripts}\n</head>`);
@@ -1997,12 +2032,13 @@
 
       playCompletionChime();
 
+      const offlineIconSvg = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%232563eb"><circle cx="12" cy="12" r="10"/><path fill="%23ffffff" d="M9 12l2 2 4-4"/></svg>';
       if ('Notification' in window && Notification.permission === 'granted') {
         try {
           const notif = new Notification(title, {
             body: message,
-            icon: 'https://cdn-icons-png.flaticon.com/512/3767/3767084.png',
-            badge: 'https://cdn-icons-png.flaticon.com/512/3767/3767084.png',
+            icon: offlineIconSvg,
+            badge: offlineIconSvg,
             tag: 'converter-job-done',
             renotify: true
           });
@@ -2154,10 +2190,11 @@
           let coreScriptContent = embeddedCoreEl.textContent;
           if (embeddedWasmEl && embeddedWasmEl.textContent.trim().length > 0) {
             try {
-              const rawB64 = embeddedWasmEl.textContent.trim();
+              const rawB64 = embeddedWasmEl.textContent.replace(/\s+/g, '');
               const binaryString = atob(rawB64);
-              const bytes = new Uint8Array(binaryString.length);
-              for (let i = 0; i < binaryString.length; i++) {
+              const len = binaryString.length;
+              const bytes = new Uint8Array(len);
+              for (let i = 0; i < len; i++) {
                 bytes[i] = binaryString.charCodeAt(i);
               }
               const wasmBlob = new Blob([bytes], { type: 'application/wasm' });
