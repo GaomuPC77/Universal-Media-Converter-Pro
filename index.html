@@ -279,6 +279,88 @@
     .btn-sm.btn-danger { background-color: var(--danger-color); color: #fff; border: none; }
     .btn-sm:disabled { opacity: 0.5; cursor: default; }
 
+    /* 変換履歴タブのスタイル */
+    .history-card {
+      background-color: var(--item-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .history-card:hover {
+      border-color: var(--accent-color);
+    }
+    .history-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .history-card-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-color);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      word-break: break-all;
+    }
+    .history-badge {
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .history-badge-convert { background: rgba(37, 99, 235, 0.12); color: #2563eb; }
+    .history-badge-audio { background: rgba(16, 185, 129, 0.12); color: #10b981; }
+    .history-badge-meta { background: rgba(217, 119, 6, 0.12); color: #d97706; }
+    .history-details-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 6px 12px;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+      background: var(--card-bg);
+      padding: 8px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border-color);
+    }
+    .history-detail-item {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+    .history-detail-label {
+      font-size: 0.68rem;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .history-detail-value {
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    .history-actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 8px;
+      margin-top: 2px;
+      flex-wrap: wrap;
+    }
+    .history-options-summary {
+      font-size: 0.75rem;
+      color: var(--text-sub);
+      word-break: break-all;
+    }
+
     .preview-container { width: 100%; margin-top: 8px; display: none; }
     .preview-container video, .preview-container audio { width: 100%; max-height: 220px; border-radius: 6px; background-color: #000; }
 
@@ -507,6 +589,9 @@
       <button class="tab-btn active" id="tabConvertBtn" data-i18n="tabConvert">変換</button>
       <button class="tab-btn" id="tabAudioEditBtn" data-i18n="tabAudioEdit">オーディオ加工</button>
       <button class="tab-btn" id="tabMetaBtn" data-i18n="tabMeta">メタタグ編集</button>
+      <button class="tab-btn" id="tabHistoryBtn" data-i18n="tabHistory">
+        変換履歴 <span id="historyCountBadge" class="badge" style="padding: 1px 6px; font-size: 0.7rem; margin-left: 4px; display: none;">0</span>
+      </button>
     </div>
 
     <!-- TAB 1: 変換画面 -->
@@ -763,6 +848,56 @@
           <button class="btn btn-primary" id="saveMetaBtn">
             <span id="btnMetaText" data-i18n="btnSaveMeta">メタタグを更新して保存</span>
           </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 変換履歴画面 -->
+    <div class="tab-content" id="tabHistoryContent">
+      <div class="card">
+        <div class="section-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+          <span data-i18n="historyTabTitle">変換・処理履歴</span>
+          <div style="display: flex; gap: 8px;">
+            <button id="btnExportHistoryCsv" class="btn-sm" style="padding: 6px 12px; font-size: 0.8rem; background: var(--item-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span data-i18n="btnExportCsv">CSV出力</span>
+            </button>
+            <button id="btnClearHistory" class="btn-sm" style="padding: 6px 12px; font-size: 0.8rem; background: rgba(220, 38, 38, 0.1); color: var(--danger-color); border: 1px solid rgba(220, 38, 38, 0.3); border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span data-i18n="btnClearHistory">履歴を消去</span>
+            </button>
+          </div>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 14px;" data-i18n="historyTabDesc">
+          これまでに変換・加工したファイルの処理履歴一覧です。過去の変換結果の再ダウンロードや詳細ログの確認が可能です。
+        </p>
+
+        <!-- 検索 ＆ 絞り込みフィルターバー -->
+        <div style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 14px;">
+          <input type="text" id="historySearchInput" class="input-text" style="margin-bottom: 0;" placeholder="ファイル名で検索..." data-i18n-placeholder="phSearchHistory">
+          <select id="historyFilterType" class="select-field">
+            <option value="all" data-i18n="filterAllTypes">すべての種別</option>
+            <option value="convert" data-i18n="tabConvert">一括変換</option>
+            <option value="audio_fx" data-i18n="tabAudioEdit">オーディオ加工</option>
+            <option value="metadata" data-i18n="tabMeta">メタタグ編集</option>
+          </select>
+          <select id="historySortBy" class="select-field">
+            <option value="newest" data-i18n="sortNewest">新しい順</option>
+            <option value="oldest" data-i18n="sortOldest">古い順</option>
+            <option value="size" data-i18n="sortSize">サイズ順</option>
+          </select>
+        </div>
+
+        <!-- 履歴リスト一覧エリア -->
+        <div id="historyListContainer" style="display: flex; flex-direction: column; gap: 10px;">
+          <!-- JSで動的レンダリング -->
+        </div>
+
+        <!-- 履歴なしの空状態 -->
+        <div id="historyEmptyState" style="text-align: center; padding: 40px 20px; color: var(--text-sub); border: 2px dashed var(--border-color); border-radius: 8px; margin-top: 8px;">
+          <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin: 0 auto 10px; opacity: 0.5;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <p style="font-weight: 600; font-size: 0.95rem; margin-bottom: 4px;" data-i18n="txtHistoryEmptyTitle">変換履歴はありません</p>
+          <p style="font-size: 0.8rem;" data-i18n="txtHistoryEmptyDesc">ファイル変換や音声加工を行うと、ここに履歴が記録されます。</p>
         </div>
       </div>
     </div>
@@ -1234,7 +1369,31 @@
         driveOriginHelpDesc: "Google CloudコンソールのOAuth 2.0 クライアント設定にて、「承認済みの JavaScript 生成元」に現在のアプリURLを追加してください:",
         driveFilterAll: "すべての対応形式",
         driveFilterVideoAll: "動画形式すべて (MP4, MOV, WebM...)",
-        driveFilterAudioAll: "音声形式すべて (MP3, WAV, M4A...)"
+        driveFilterAudioAll: "音声形式すべて (MP3, WAV, M4A...)",
+        tabHistory: "変換履歴",
+        historyTabTitle: "変換・処理履歴",
+        historyTabDesc: "これまでに変換・加工したファイルの処理履歴一覧です。過去の変換結果の再ダウンロードや詳細ログの確認が可能です。",
+        btnExportCsv: "CSV出力",
+        btnClearHistory: "履歴を消去",
+        phSearchHistory: "ファイル名で検索...",
+        filterAllTypes: "すべての種別",
+        sortNewest: "新しい順",
+        sortOldest: "古い順",
+        sortSize: "サイズ順",
+        txtHistoryEmptyTitle: "変換履歴はありません",
+        txtHistoryEmptyDesc: "ファイル変換や音声加工を行うと、ここに履歴が記録されます。",
+        btnRedownload: "再保存",
+        btnDeleteHistory: "削除",
+        lblInputFile: "元ファイル",
+        lblOutputFile: "出力ファイル",
+        lblProcessedDate: "処理日時",
+        lblProcessTime: "処理時間",
+        lblSizeChange: "サイズ変化",
+        lblAppliedSettings: "適用設定",
+        confirmClearHistory: "これまでの変換履歴をすべて消去しますか？（保存されているデータも削除されます）",
+        msgHistoryCleared: "変換履歴を消去しました",
+        msgHistoryDeleted: "履歴を削除しました",
+        msgHistoryExported: "履歴CSVファイルを書き出しました"
       },
       en: {
         pageTitle: "Universal Media Converter Pro",
@@ -1463,7 +1622,31 @@
         driveOriginHelpDesc: "In your Google Cloud Console OAuth 2.0 Client credentials, please add this URL to 'Authorized JavaScript origins':",
         driveFilterAll: "All Supported Formats",
         driveFilterVideoAll: "All Video Formats (MP4, MOV, WebM...)",
-        driveFilterAudioAll: "All Audio Formats (MP3, WAV, M4A...)"
+        driveFilterAudioAll: "All Audio Formats (MP3, WAV, M4A...)",
+        tabHistory: "History",
+        historyTabTitle: "Conversion & Processing History",
+        historyTabDesc: "History log of all converted and processed files. You can redownload previous results or check process details.",
+        btnExportCsv: "Export CSV",
+        btnClearHistory: "Clear History",
+        phSearchHistory: "Search by filename...",
+        filterAllTypes: "All Types",
+        sortNewest: "Newest First",
+        sortOldest: "Oldest First",
+        sortSize: "File Size",
+        txtHistoryEmptyTitle: "No conversion history yet",
+        txtHistoryEmptyDesc: "Processed files will be recorded and displayed here.",
+        btnRedownload: "Save File",
+        btnDeleteHistory: "Delete",
+        lblInputFile: "Source File",
+        lblOutputFile: "Output File",
+        lblProcessedDate: "Processed At",
+        lblProcessTime: "Processing Time",
+        lblSizeChange: "File Size",
+        lblAppliedSettings: "Applied Options",
+        confirmClearHistory: "Are you sure you want to clear all conversion history? (Cached files will also be removed)",
+        msgHistoryCleared: "Cleared conversion history",
+        msgHistoryDeleted: "Deleted history record",
+        msgHistoryExported: "Exported history CSV file"
       }
     };
 
@@ -1543,6 +1726,7 @@
       if (typeof refreshAudioTargetSelect === 'function') refreshAudioTargetSelect();
       if (typeof refreshMetaTargetSelect === 'function') refreshMetaTargetSelect();
       if (typeof updateNotifBtnUI === 'function') updateNotifBtnUI();
+      if (typeof renderHistoryList === 'function') renderHistoryList();
     }
 
     function setTheme(theme) {
@@ -1571,32 +1755,39 @@
     const tabConvertBtn = document.getElementById('tabConvertBtn');
     const tabAudioEditBtn = document.getElementById('tabAudioEditBtn');
     const tabMetaBtn = document.getElementById('tabMetaBtn');
+    const tabHistoryBtn = document.getElementById('tabHistoryBtn');
     const tabConvertContent = document.getElementById('tabConvertContent');
     const tabAudioEditContent = document.getElementById('tabAudioEditContent');
     const tabMetaContent = document.getElementById('tabMetaContent');
+    const tabHistoryContent = document.getElementById('tabHistoryContent');
 
     function switchTab(target) {
-      [tabConvertBtn, tabAudioEditBtn, tabMetaBtn].forEach(b => b.classList.remove('active'));
-      [tabConvertContent, tabAudioEditContent, tabMetaContent].forEach(c => c.classList.remove('active'));
+      [tabConvertBtn, tabAudioEditBtn, tabMetaBtn, tabHistoryBtn].filter(Boolean).forEach(b => b.classList.remove('active'));
+      [tabConvertContent, tabAudioEditContent, tabMetaContent, tabHistoryContent].filter(Boolean).forEach(c => c.classList.remove('active'));
 
       if (target === 'audio') {
-        tabAudioEditBtn.classList.add('active');
-        tabAudioEditContent.classList.add('active');
+        if (tabAudioEditBtn) tabAudioEditBtn.classList.add('active');
+        if (tabAudioEditContent) tabAudioEditContent.classList.add('active');
         refreshAudioTargetSelect();
       } else if (target === 'meta') {
-        tabMetaBtn.classList.add('active');
-        tabMetaContent.classList.add('active');
+        if (tabMetaBtn) tabMetaBtn.classList.add('active');
+        if (tabMetaContent) tabMetaContent.classList.add('active');
         refreshMetaTargetSelect();
+      } else if (target === 'history') {
+        if (tabHistoryBtn) tabHistoryBtn.classList.add('active');
+        if (tabHistoryContent) tabHistoryContent.classList.add('active');
+        if (typeof renderHistoryList === 'function') renderHistoryList();
       } else {
-        tabConvertBtn.classList.add('active');
-        tabConvertContent.classList.add('active');
+        if (tabConvertBtn) tabConvertBtn.classList.add('active');
+        if (tabConvertContent) tabConvertContent.classList.add('active');
         refreshConvertTargetSelect();
       }
     }
 
-    tabConvertBtn.addEventListener('click', () => switchTab('convert'));
-    tabAudioEditBtn.addEventListener('click', () => switchTab('audio'));
-    tabMetaBtn.addEventListener('click', () => switchTab('meta'));
+    if (tabConvertBtn) tabConvertBtn.addEventListener('click', () => switchTab('convert'));
+    if (tabAudioEditBtn) tabAudioEditBtn.addEventListener('click', () => switchTab('audio'));
+    if (tabMetaBtn) tabMetaBtn.addEventListener('click', () => switchTab('meta'));
+    if (tabHistoryBtn) tabHistoryBtn.addEventListener('click', () => switchTab('history'));
 
     function showToast(msg) {
       const toast = document.getElementById('toastNotification');
@@ -1824,9 +2015,10 @@
     });
 
     // IndexedDB & Persistence Management
-    const DB_NAME = 'MediaConverterPro_v10';
+    const DB_NAME = 'MediaConverterPro_v11';
     let db = null;
     let pendingFiles = [];
+    let cachedHistoryRecords = [];
     const activeBlobUrls = new Map();
 
     function initDB() {
@@ -1840,11 +2032,15 @@
           if (!dbObj.objectStoreNames.contains('pending_files')) {
             dbObj.createObjectStore('pending_files', { keyPath: 'key' });
           }
+          if (!dbObj.objectStoreNames.contains('history_records')) {
+            dbObj.createObjectStore('history_records', { keyPath: 'id' });
+          }
         };
         req.onsuccess = async (e) => {
           db = e.target.result;
           try {
             await migrateFromOldDB();
+            await loadHistoryRecords();
           } catch(err) {}
           resolve(db);
         };
@@ -1855,7 +2051,7 @@
     async function migrateFromOldDB() {
       if (!window.indexedDB) return;
       return new Promise((resolve) => {
-        const checkReq = indexedDB.open('MediaConverterPro_v9', 1);
+        const checkReq = indexedDB.open('MediaConverterPro_v10', 1);
         checkReq.onsuccess = (e) => {
           const oldDb = e.target.result;
           if (oldDb.objectStoreNames.contains('files')) {
@@ -1910,6 +2106,353 @@
         tx.onerror = () => resolve();
       });
     }
+
+    // 変換履歴管理システム
+    async function addHistoryRecord({ taskType, inputName, inputSize, outputName, outputSize, outputFormat, durationSec, optionsSummary, data }) {
+      const record = {
+        id: `hist_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+        date: Date.now(),
+        taskType: taskType || 'convert',
+        inputName: inputName || 'input',
+        inputSize: inputSize || 0,
+        outputName: outputName || 'output',
+        outputSize: outputSize || (data ? data.byteLength : 0),
+        outputFormat: (outputFormat || '').toUpperCase(),
+        durationSec: durationSec || 0,
+        optionsSummary: optionsSummary || '',
+        data: data || null
+      };
+
+      cachedHistoryRecords.unshift(record);
+      // メモリ保護のためキャッシュ保持上限（最大100件）
+      if (cachedHistoryRecords.length > 100) {
+        cachedHistoryRecords.pop();
+      }
+
+      updateHistoryBadge();
+      if (document.getElementById('tabHistoryContent')?.classList.contains('active')) {
+        renderHistoryList();
+      }
+
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('history_records', 'readwrite');
+          tx.objectStore('history_records').put(record);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    async function loadHistoryRecords() {
+      if (!db) return [];
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('history_records', 'readonly');
+          const req = tx.objectStore('history_records').getAll();
+          req.onsuccess = () => {
+            const list = req.result || [];
+            list.sort((a, b) => (b.date || 0) - (a.date || 0));
+            cachedHistoryRecords = list;
+            updateHistoryBadge();
+            renderHistoryList();
+            resolve(list);
+          };
+          req.onerror = () => { resolve([]); };
+        } catch(e) { resolve([]); }
+      });
+    }
+
+    async function deleteHistoryRecordDB(id) {
+      cachedHistoryRecords = cachedHistoryRecords.filter(r => r.id !== id);
+      updateHistoryBadge();
+      renderHistoryList();
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('history_records', 'readwrite');
+          tx.objectStore('history_records').delete(id);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    async function clearAllHistoryDB() {
+      cachedHistoryRecords = [];
+      updateHistoryBadge();
+      renderHistoryList();
+      if (!db) return;
+      return new Promise((resolve) => {
+        try {
+          const tx = db.transaction('history_records', 'readwrite');
+          tx.objectStore('history_records').clear();
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch(e) { resolve(); }
+      });
+    }
+
+    function updateHistoryBadge() {
+      const badge = document.getElementById('historyCountBadge');
+      if (!badge) return;
+      const count = cachedHistoryRecords.length;
+      badge.textContent = count;
+      badge.style.display = count > 0 ? 'inline-block' : 'none';
+    }
+
+    function formatFileSizeStr(bytes) {
+      if (!bytes || isNaN(bytes) || bytes <= 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+    }
+
+    function renderHistoryList() {
+      const container = document.getElementById('historyListContainer');
+      const emptyState = document.getElementById('historyEmptyState');
+      if (!container || !emptyState) return;
+
+      const t = i18n[currentLang] || {};
+      const searchWord = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
+      const filterType = document.getElementById('historyFilterType')?.value || 'all';
+      const sortBy = document.getElementById('historySortBy')?.value || 'newest';
+
+      let items = [...cachedHistoryRecords];
+
+      // フィルタリング
+      if (filterType !== 'all') {
+        items = items.filter(it => it.taskType === filterType);
+      }
+      if (searchWord) {
+        items = items.filter(it => 
+          (it.outputName && it.outputName.toLowerCase().includes(searchWord)) ||
+          (it.inputName && it.inputName.toLowerCase().includes(searchWord)) ||
+          (it.optionsSummary && it.optionsSummary.toLowerCase().includes(searchWord)) ||
+          (it.outputFormat && it.outputFormat.toLowerCase().includes(searchWord))
+        );
+      }
+
+      // ソート
+      if (sortBy === 'oldest') {
+        items.sort((a, b) => (a.date || 0) - (b.date || 0));
+      } else if (sortBy === 'size') {
+        items.sort((a, b) => (b.outputSize || 0) - (a.outputSize || 0));
+      } else {
+        items.sort((a, b) => (b.date || 0) - (a.date || 0));
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = '';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      container.innerHTML = '';
+
+      items.forEach(record => {
+        const card = document.createElement('div');
+        card.className = 'history-card';
+        card.id = `card_${record.id}`;
+
+        let typeBadgeClass = 'history-badge-convert';
+        let typeLabel = t.tabConvert || '一括変換';
+        if (record.taskType === 'audio_fx') {
+          typeBadgeClass = 'history-badge-audio';
+          typeLabel = t.tabAudioEdit || '音声加工';
+        } else if (record.taskType === 'metadata') {
+          typeBadgeClass = 'history-badge-meta';
+          typeLabel = t.tabMeta || 'メタタグ';
+        }
+
+        const dateStr = record.date ? new Date(record.date).toLocaleString(currentLang === 'ja' ? 'ja-JP' : 'en-US', {
+          year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit'
+        }) : '-';
+
+        const inSizeStr = formatFileSizeStr(record.inputSize);
+        const outSizeStr = formatFileSizeStr(record.outputSize);
+        let ratioStr = '';
+        if (record.inputSize > 0 && record.outputSize > 0) {
+          const diffPct = (((record.outputSize - record.inputSize) / record.inputSize) * 100).toFixed(1);
+          const sign = Number(diffPct) > 0 ? `+${diffPct}%` : `${diffPct}%`;
+          ratioStr = `<span style="font-size:0.72rem; color:${Number(diffPct) <= 0 ? 'var(--success-color)' : 'var(--accent-color)'};">(${sign})</span>`;
+        }
+
+        const hasBlob = record.data && record.data.byteLength > 0;
+
+        card.innerHTML = `
+          <div class="history-card-header">
+            <div class="history-card-title">
+              <span class="history-badge ${typeBadgeClass}">${typeLabel}</span>
+              <span>${record.outputName}</span>
+            </div>
+            <span style="font-size:0.72rem; color:var(--text-sub); white-space:nowrap;">${dateStr}</span>
+          </div>
+
+          <div class="history-details-grid">
+            <div class="history-detail-item">
+              <span class="history-detail-label">${t.lblInputFile || '元ファイル'}</span>
+              <span class="history-detail-value" style="font-size:0.75rem; word-break:break-all;">${record.inputName} (${inSizeStr})</span>
+            </div>
+            <div class="history-detail-item">
+              <span class="history-detail-label">${t.lblSizeChange || 'サイズ変化'}</span>
+              <span class="history-detail-value" style="font-size:0.75rem;">${inSizeStr} → ${outSizeStr} ${ratioStr}</span>
+            </div>
+            <div class="history-detail-item">
+              <span class="history-detail-label">${t.lblProcessTime || '処理時間'}</span>
+              <span class="history-detail-value">${record.durationSec || '0.0'}s</span>
+            </div>
+            <div class="history-detail-item">
+              <span class="history-detail-label">${t.lblFormatPrefix || '形式: .'}</span>
+              <span class="history-detail-value">.${(record.outputFormat || '').toLowerCase()}</span>
+            </div>
+          </div>
+
+          ${record.optionsSummary ? `<div class="history-options-summary"><strong>${t.lblAppliedSettings || '設定'}:</strong> ${record.optionsSummary}</div>` : ''}
+
+          <div class="history-actions">
+            ${hasBlob ? `
+              <button class="btn-sm btn-hist-preview" data-id="${record.id}" style="display:flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>${t.btnItemPreview || 'プレビュー'}</span>
+              </button>
+              <button class="btn-sm btn-success btn-hist-download" data-id="${record.id}" style="display:flex; align-items:center; gap:4px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span>${t.btnRedownload || '再保存'}</span>
+              </button>
+            ` : ''}
+            <button class="btn-sm btn-danger btn-hist-delete" data-id="${record.id}" style="display:flex; align-items:center; gap:4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              <span>${t.btnDeleteHistory || '削除'}</span>
+            </button>
+          </div>
+
+          <div class="preview-container hist-preview-${record.id}"></div>
+        `;
+
+        // プレビューボタン
+        const prevBtn = card.querySelector('.btn-hist-preview');
+        if (prevBtn) {
+          prevBtn.addEventListener('click', () => {
+            const pBox = card.querySelector(`.hist-preview-${record.id}`);
+            if (!pBox) return;
+            if (pBox.style.display === 'block') {
+              pBox.style.display = 'none';
+              pBox.innerHTML = '';
+              prevBtn.querySelector('span').textContent = t.btnItemPreview || 'プレビュー';
+            } else {
+              const fmt = (record.outputFormat || '').toLowerCase();
+              const isVideo = ['mp4', 'webm', 'gif'].includes(fmt);
+              const blob = new Blob([record.data], { type: isVideo ? `video/${fmt === 'gif' ? 'mp4' : fmt}` : `audio/${fmt}` });
+              const url = URL.createObjectURL(blob);
+              pBox.innerHTML = isVideo ? `<video controls autoplay src="${url}"></video>` : `<audio controls autoplay src="${url}"></audio>`;
+              pBox.style.display = 'block';
+              prevBtn.querySelector('span').textContent = t.btnItemClose || '閉じる';
+            }
+          });
+        }
+
+        // 再ダウンロードボタン
+        const dlBtn = card.querySelector('.btn-hist-download');
+        if (dlBtn) {
+          dlBtn.addEventListener('click', () => {
+            downloadHistoryRecord(record.id);
+          });
+        }
+
+        // 削除ボタン
+        const delBtn = card.querySelector('.btn-hist-delete');
+        if (delBtn) {
+          delBtn.addEventListener('click', async () => {
+            await deleteHistoryRecordDB(record.id);
+            showToast(t.msgHistoryDeleted || '履歴を削除しました');
+          });
+        }
+
+        container.appendChild(card);
+      });
+    }
+
+    function downloadHistoryRecord(id) {
+      const record = cachedHistoryRecords.find(r => r.id === id);
+      if (!record || !record.data) {
+        showToast("ダウンロード可能なデータがありません");
+        return;
+      }
+      const fmt = (record.outputFormat || 'bin').toLowerCase();
+      const mime = ['mp4', 'webm'].includes(fmt) ? `video/${fmt}` : ['mp3', 'wav', 'm4a', 'aac', 'ogg'].includes(fmt) ? `audio/${fmt}` : 'application/octet-stream';
+      const blob = new Blob([record.data], { type: mime });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = record.outputName || `file.${fmt}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    function exportHistoryCsv() {
+      const t = i18n[currentLang] || {};
+      if (cachedHistoryRecords.length === 0) {
+        showToast(t.txtHistoryEmptyTitle || "変換履歴はありません");
+        return;
+      }
+
+      const headers = ["ID", "日時", "処理種別", "元ファイル名", "元サイズ(Bytes)", "出力ファイル名", "出力サイズ(Bytes)", "サイズ比率", "所要時間(秒)", "形式", "適用設定"];
+      const rows = cachedHistoryRecords.map(r => {
+        const d = r.date ? new Date(r.date).toISOString() : '';
+        const inBytes = r.inputSize || 0;
+        const outBytes = r.outputSize || 0;
+        let diffPct = '';
+        if (inBytes > 0 && outBytes > 0) {
+          diffPct = (((outBytes - inBytes) / inBytes) * 100).toFixed(1) + '%';
+        }
+        return [
+          r.id,
+          d,
+          r.taskType,
+          `"${(r.inputName || '').replace(/"/g, '""')}"`,
+          inBytes,
+          `"${(r.outputName || '').replace(/"/g, '""')}"`,
+          outBytes,
+          diffPct,
+          r.durationSec || 0,
+          r.outputFormat || '',
+          `"${(r.optionsSummary || '').replace(/"/g, '""')}"`
+        ];
+      });
+
+      const csvContent = "\uFEFF" + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const nowStr = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '');
+      a.download = `media_conversion_history_${nowStr}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      showToast(t.msgHistoryExported || "履歴CSVファイルを書き出しました");
+    }
+
+    // 履歴タブのイベントリスナー設定
+    document.getElementById('historySearchInput')?.addEventListener('input', renderHistoryList);
+    document.getElementById('historyFilterType')?.addEventListener('change', renderHistoryList);
+    document.getElementById('historySortBy')?.addEventListener('change', renderHistoryList);
+    document.getElementById('btnExportHistoryCsv')?.addEventListener('click', exportHistoryCsv);
+    document.getElementById('btnClearHistory')?.addEventListener('click', async () => {
+      const t = i18n[currentLang] || {};
+      const confirmed = await showCustomConfirm("確認", t.confirmClearHistory || "これまでの変換履歴をすべて消去しますか？");
+      if (confirmed) {
+        await clearAllHistoryDB();
+        showToast(t.msgHistoryCleared || "変換履歴を消去しました");
+      }
+    });
 
     // 未処理（処理待ち）ファイルの永続化管理（タブを閉じても安全に復元）
     async function savePendingFile(key, name, size, type, data) {
@@ -2547,6 +3090,7 @@
         const outFormat = outputFormat.value.toLowerCase();
 
         for (const file of targets) {
+          const fileStartTime = performance.now();
           currentIdx++;
           counterLabel.textContent = `${currentIdx} / ${total}`;
           updateProgress(((currentIdx - 1) / total) * 100, `変換準備中: ${file.name}`);
@@ -2558,16 +3102,19 @@
 
           // 高速化・高品質FFmpegコマンド引数の構築
           let args = [];
+          let optsList = [];
 
           // 高速シーク (-ss を -i の前に指定することで先頭デコードのスキップによる大幅な高速化)
           const trimStart = document.getElementById('trimStart')?.value.trim();
           const trimEnd = document.getElementById('trimEnd')?.value.trim();
           if (trimStart) {
             args.push('-ss', trimStart);
+            optsList.push(`開始: ${trimStart}s`);
           }
           args.push('-i', inputName);
           if (trimEnd) {
             args.push('-to', trimEnd);
+            optsList.push(`終了: ${trimEnd}s`);
           }
 
           const quality = document.getElementById('qualityPreset')?.value || 'default';
@@ -2582,25 +3129,32 @@
             // libx264 + ultrafast + zerolatency + yuv420p が超高速・高互換変換の決定版
             args.push('-c:v', 'libx264', '-preset', 'ultrafast', '-tune', 'zerolatency', '-crf', crf, '-pix_fmt', 'yuv420p', '-threads', '1');
             args.push('-c:a', 'aac', '-b:a', aBitrate);
+            optsList.push(`MP4 (CRF:${crf}, ${quality})`);
           } else if (outFormat === 'webm') {
             args.push('-c:v', 'libvpx', '-crf', '32', '-b:v', '0', '-deadline', 'realtime', '-speed', '8', '-cpu-used', '8', '-threads', '1');
             args.push('-c:a', 'libvorbis', '-b:a', '128k');
+            optsList.push(`WebM (VP8/Vorbis)`);
           } else if (outFormat === 'gif') {
             args.push('-vf', 'fps=10,scale=360:-1:flags=fast_bilinear');
+            optsList.push(`GIF`);
           } else if (outFormat === 'mp3') {
             let aBitrate = '160k';
             if (quality === 'high') aBitrate = '256k';
             else if (quality === 'low') aBitrate = '96k';
             args.push('-c:a', 'libmp3lame', '-b:a', aBitrate);
+            optsList.push(`MP3 (${aBitrate})`);
           } else if (outFormat === 'wav') {
             args.push('-c:a', 'pcm_s16le');
+            optsList.push(`WAV (PCM 16-bit)`);
           } else if (outFormat === 'm4a' || outFormat === 'aac') {
             let aBitrate = '128k';
             if (quality === 'high') aBitrate = '192k';
             else if (quality === 'low') aBitrate = '96k';
             args.push('-c:a', 'aac', '-b:a', aBitrate);
+            optsList.push(`${outFormat.toUpperCase()} (${aBitrate})`);
           } else if (outFormat === 'ogg') {
             args.push('-c:a', 'libvorbis', '-b:a', '128k');
+            optsList.push(`OGG (Vorbis 128k)`);
           }
 
           // 音声加工（Tab 1）
@@ -2613,15 +3167,20 @@
           if (convPitch !== 0 || convSpeed !== 1.0) {
             const pitchRatio = Math.pow(2, convPitch / 12);
             afFilters.push(`asetrate=44100*${pitchRatio.toFixed(4)},aresample=44100,atempo=${(convSpeed / pitchRatio).toFixed(4)}`);
+            if (convPitch !== 0) optsList.push(`ピッチ: ${convPitch > 0 ? '+' : ''}${convPitch}`);
+            if (convSpeed !== 1.0) optsList.push(`速度: ${convSpeed}x`);
           }
           if (convVol !== 100) {
             afFilters.push(`volume=${(convVol / 100).toFixed(2)}`);
+            optsList.push(`音量: ${convVol}%`);
           }
           if (convChkDistant) {
             afFilters.push(`lowpass=f=800`);
+            optsList.push(`遠くで鳴る音`);
           }
           if (document.getElementById('chkNormalize')?.checked) {
             afFilters.push('loudnorm=I=-16:TP=-1.5:LRA=11');
+            optsList.push(`音量ノーマライズ`);
           }
 
           // フェードイン ＆ フェードアウト
@@ -2629,6 +3188,7 @@
           const convFadeOut = parseFloat(document.getElementById('convFadeOut')?.value || '0');
           if (convFadeIn > 0) {
             afFilters.push(`afade=t=in:ss=0:d=${convFadeIn.toFixed(2)}`);
+            optsList.push(`フェードイン: ${convFadeIn}s`);
           }
           if (convFadeOut > 0) {
             const tStartVal = parseFloat(trimStart || '0');
@@ -2639,6 +3199,7 @@
             } else {
               afFilters.push(`areverse,afade=t=in:ss=0:d=${convFadeOut.toFixed(2)},areverse`);
             }
+            optsList.push(`フェードアウト: ${convFadeOut}s`);
           }
 
           if (afFilters.length > 0) {
@@ -2675,8 +3236,22 @@
 
           const uniqueKey = `${file.name}_${file.size}`;
           const targetId = `conv_${uniqueKey}`;
+          const durationSec = ((performance.now() - fileStartTime) / 1000).toFixed(1);
 
           await saveConvertedFile(targetId, file.name, outFileName, result.data, outFormat);
+
+          // 変換履歴に追加
+          await addHistoryRecord({
+            taskType: 'convert',
+            inputName: file.name,
+            inputSize: file.size,
+            outputName: outFileName,
+            outputSize: result.data.byteLength,
+            outputFormat: outFormat,
+            durationSec: parseFloat(durationSec),
+            optionsSummary: optsList.join(', '),
+            data: result.data
+          });
 
           // 未処理アイテムから削除し、完了アイテムとしてUIおよびDBを更新
           const pendingItemEl = document.getElementById(`pending_${uniqueKey}`);
@@ -3209,6 +3784,7 @@
         btnExportAudio.disabled = true;
         const btnExportText = document.getElementById('btnExportText');
         btnExportText.innerHTML = `<span class="spinner"></span> ${t.exportingAudio || "書き出し中..."}`;
+        const exportStartTime = performance.now();
 
         try {
           const inExt = originalFileName.split('.').pop().toLowerCase() || 'wav';
@@ -3216,8 +3792,10 @@
           const outputName = `audio_out_${Date.now()}.mp3`;
 
           const args = ['-i', inputName];
+          let fxOptsList = [];
           if (trimRange.end > trimRange.start) {
             args.push('-ss', String(trimRange.start), '-to', String(trimRange.end));
+            fxOptsList.push(`範囲: ${trimRange.start}s-${trimRange.end}s`);
           }
 
           const vol = (parseFloat(document.getElementById('fxVol').value) || 100) / 100;
@@ -3225,11 +3803,18 @@
           const pitch = parseInt(document.getElementById('fxPitch').value) || 0;
 
           let afFilters = [];
-          if (vol !== 1.0) afFilters.push(`volume=${vol.toFixed(2)}`);
-          if (speed !== 1.0) afFilters.push(`atempo=${speed.toFixed(2)}`);
+          if (vol !== 1.0) {
+            afFilters.push(`volume=${vol.toFixed(2)}`);
+            fxOptsList.push(`音量: ${Math.round(vol * 100)}%`);
+          }
+          if (speed !== 1.0) {
+            afFilters.push(`atempo=${speed.toFixed(2)}`);
+            fxOptsList.push(`速度: ${speed}x`);
+          }
           if (pitch !== 0) {
             const factor = Math.pow(2, pitch / 12).toFixed(4);
             afFilters.push(`asetrate=44100*${factor},aresample=44100`);
+            fxOptsList.push(`ピッチ: ${pitch > 0 ? '+' : ''}${pitch}`);
           }
 
           const eq60 = parseInt(document.getElementById('eqBand60').value) || 0;
@@ -3243,12 +3828,16 @@
           if (eq910 !== 0) afFilters.push(`equalizer=f=910:width_type=h:width=500:g=${eq910}`);
           if (eq4k !== 0) afFilters.push(`equalizer=f=4000:width_type=h:width=2000:g=${eq4k}`);
           if (eq14k !== 0) afFilters.push(`equalizer=f=14000:width_type=h:width=5000:g=${eq14k}`);
+          if (eq60 !== 0 || eq230 !== 0 || eq910 !== 0 || eq4k !== 0 || eq14k !== 0) {
+            fxOptsList.push('EQ調整');
+          }
 
           // フェードイン ＆ フェードアウト
           const fxFadeIn = parseFloat(document.getElementById('fxFadeIn')?.value || '0');
           const fxFadeOut = parseFloat(document.getElementById('fxFadeOut')?.value || '0');
           if (fxFadeIn > 0) {
             afFilters.push(`afade=t=in:ss=0:d=${fxFadeIn.toFixed(2)}`);
+            fxOptsList.push(`フェードイン: ${fxFadeIn}s`);
           }
           if (fxFadeOut > 0) {
             let clipDuration = 0;
@@ -3263,6 +3852,7 @@
             } else {
               afFilters.push(`areverse,afade=t=in:ss=0:d=${fxFadeOut.toFixed(2)},areverse`);
             }
+            fxOptsList.push(`フェードアウト: ${fxFadeOut}s`);
           }
 
           if (afFilters.length > 0) {
@@ -3277,7 +3867,22 @@
 
           const outName = `fx_${originalFileName.substring(0, originalFileName.lastIndexOf('.'))}.mp3`;
           const newId = `conv_fx_${Date.now()}`;
+          const durationSec = ((performance.now() - exportStartTime) / 1000).toFixed(1);
+
           await saveConvertedFile(newId, originalFileName, outName, result.data, 'mp3');
+
+          await addHistoryRecord({
+            taskType: 'audio_fx',
+            inputName: originalFileName,
+            inputSize: arrayBuffer.byteLength,
+            outputName: outName,
+            outputSize: result.data.byteLength,
+            outputFormat: 'mp3',
+            durationSec: parseFloat(durationSec),
+            optionsSummary: fxOptsList.join(', ') || 'MP3 192k',
+            data: result.data
+          });
+
           createFileItemUI(newId, outName, 'mp3', true, result.data);
           downloadAllBtn.disabled = false;
           refreshAudioTargetSelect();
@@ -3320,6 +3925,7 @@
         saveMetaBtn.disabled = true;
         const btnMetaText = document.getElementById('btnMetaText');
         btnMetaText.innerHTML = `<span class="spinner"></span> ${t.updatingMeta || "メタタグ更新中..."}`;
+        const metaStartTime = performance.now();
 
         try {
           const inExt = originalFileName.split('.').pop().toLowerCase();
@@ -3334,12 +3940,13 @@
           const track = document.getElementById('editMetaTrack').value.trim();
 
           const args = ['-i', inputName];
-          if (title) args.push('-metadata', `title=${title}`);
-          if (artist) args.push('-metadata', `artist=${artist}`);
-          if (album) args.push('-metadata', `album=${album}`);
-          if (genre) args.push('-metadata', `genre=${genre}`);
-          if (year) args.push('-metadata', `date=${year}`);
-          if (track) args.push('-metadata', `track=${track}`);
+          let metaSummary = [];
+          if (title) { args.push('-metadata', `title=${title}`); metaSummary.push(`タイトル: ${title}`); }
+          if (artist) { args.push('-metadata', `artist=${artist}`); metaSummary.push(`アーティスト: ${artist}`); }
+          if (album) { args.push('-metadata', `album=${album}`); metaSummary.push(`アルバム: ${album}`); }
+          if (genre) { args.push('-metadata', `genre=${genre}`); metaSummary.push(`ジャンル: ${genre}`); }
+          if (year) { args.push('-metadata', `date=${year}`); metaSummary.push(`年: ${year}`); }
+          if (track) { args.push('-metadata', `track=${track}`); metaSummary.push(`Trk: ${track}`); }
           args.push('-c', 'copy', outputName);
 
           updateProgress(30, t.msgMetaWriting || "メタタグ書き込み中...");
@@ -3347,7 +3954,22 @@
 
           const outName = `tagged_${originalFileName}`;
           const newId = `conv_meta_${Date.now()}`;
+          const durationSec = ((performance.now() - metaStartTime) / 1000).toFixed(1);
+
           await saveConvertedFile(newId, originalFileName, outName, result.data, inExt, { title, artist, album, genre, year, track });
+
+          await addHistoryRecord({
+            taskType: 'metadata',
+            inputName: originalFileName,
+            inputSize: arrayBuffer.byteLength,
+            outputName: outName,
+            outputSize: result.data.byteLength,
+            outputFormat: inExt,
+            durationSec: parseFloat(durationSec),
+            optionsSummary: metaSummary.join(', ') || 'タグ情報更新',
+            data: result.data
+          });
+
           createFileItemUI(newId, outName, inExt, true, result.data);
           downloadAllBtn.disabled = false;
           refreshAudioTargetSelect();
